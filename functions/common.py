@@ -17,7 +17,8 @@ def find_calfile(sn):
     :param sn: sensor serial number (e.g. 'sbe10344')
     :return: full file path to the most recent calibration file
     """
-    dirname = os.path.dirname(os.getcwd())
+    # dirname = os.path.dirname(os.getcwd())
+    dirname = '/home/lgarzio/repo/lgarzio/phglider'  # in server
     caldir = os.path.join(dirname, 'calibration')
     calfiles = sorted(glob.glob(caldir + '/{}*.txt'.format(sn)))
     if len(calfiles) > 1:
