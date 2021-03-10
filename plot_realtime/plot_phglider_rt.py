@@ -39,6 +39,7 @@ def get_erddap_dataset(server, protocol, file_type, ds_id, var_list=None):
 def main(args):
     ru_server = 'http://slocum-data.marine.rutgers.edu//erddap'
     deploy = args.deployment
+    print('\nPlotting {}'.format(deploy))
     id = '{}-profile-sci-rt'.format(deploy)
     glider_vars = ['latitude', 'longitude', 'depth', 'conductivity', 'salinity', 'sci_water_pressure',
                    'temperature', 'sbe41n_ph_ref_voltage', 'chlorophyll_a', 'oxygen_concentration', 'water_depth']
