@@ -2,12 +2,15 @@
 
 """
 Author: Lori Garzio on 3/2/2021
-Last modified: 3/8/2021
-Plot realtime glider data
+Last modified: 3/10/2021
+Plot realtime pH glider data variables: seawater temperature, salinity, chlorophyll, dissolved oxygen, pH reference
+voltage, and pH (not corrected for time lag)
 """
 
 import argparse
+import sys
 import numpy as np
+import pandas as pd
 import datetime as dt
 import json
 from erddapy import ERDDAP
@@ -32,8 +35,10 @@ def get_erddap_dataset(server, protocol, file_type, ds_id, var_list=None):
     return ds
 
 
-def main(deploy, sensor_sn, sfilename):
+#def main(deploy, sensor_sn, sfilename):
+def main(args):
     ru_server = 'http://slocum-data.marine.rutgers.edu//erddap'
+    deploy = args.deployment
     id = '{}-profile-sci-rt'.format(deploy)
     glider_vars = ['latitude', 'longitude', 'depth', 'conductivity', 'salinity', 'sci_water_pressure',
                    'temperature', 'sbe41n_ph_ref_voltage', 'chlorophyll_a', 'oxygen_concentration', 'water_depth']
@@ -42,7 +47,8 @@ def main(deploy, sensor_sn, sfilename):
     ds = ds.sortby(ds.time)
 
     # read cal file
-    calfile = cf.find_calfile(sensor_sn)
+    #calfile = cf.find_calfile(sensor_sn)
+    calfile = cf.find_calfile(args.sensor_sn)
     with open(calfile) as json_file:
         cc = json.load(json_file)
 
@@ -56,10 +62,11 @@ def main(deploy, sensor_sn, sfilename):
     oxy = (ds.oxygen_concentration.values * 32) / 1000  # change oxygen from umol/L to mg/L
     chl = ds.chlorophyll_a.values
 
+    # calculate pH
     ph = np.array([])
     for i, press in enumerate(pressure_dbar):
-        f_P = np.polyval([cc['f6'], cc['f5'], cc['f4'], cc['f3'], cc['f2'], cc['f1'], 0], press)
-        phfree, phtot = phcalc.phcalc(vrs[i], press, temp[i], sal[i], cc['k0'], cc['k2'], f_P)
+        f_p = np.polyval([cc['f6'], cc['f5'], cc['f4'], cc['f3'], cc['f2'], cc['f1'], 0], press)
+        phfree, phtot = phcalc.phcalc(vrs[i], press, temp[i], sal[i], cc['k0'], cc['k2'], f_p)
         if phtot > 14:
             phtot = np.nan
         ph = np.append(ph, phtot)
@@ -85,6 +92,11 @@ def main(deploy, sensor_sn, sfilename):
         cb = plt.colorbar(xc, cax=cax)
 
         # format x-axis
+        delta = dt.timedelta(hours=6)
+        t0 = pd.to_datetime(tm[0]) + delta
+        tf = pd.to_datetime(tm[-1]) - delta
+        xdates = pd.date_range(t0, tf, periods=6)  # create 6 time bins
+        info['axes'].set_xticks(xdates)
         xfmt = mdates.DateFormatter('%d-%b')
         info['axes'].xaxis.set_major_formatter(xfmt)
         info['axes'].xaxis.set_tick_params(labelsize=15)
@@ -106,30 +118,36 @@ def main(deploy, sensor_sn, sfilename):
     fig.suptitle(main_ttl, fontsize=22, y=.96)
 
     plt.subplots_adjust(left=0.08, right=0.91, bottom=0.1, top=0.88)
-    plt.savefig(sfilename, dpi=300)
+    #plt.savefig(sfilename, dpi=300)
+    plt.savefig(args.sfilename, dpi=300)
     plt.close()
 
 
 if __name__ == '__main__':
-    deployment = 'ru30-20210226T1647'
-    #cal = '/Users/lgarzio/Documents/repo/lgarzio/phglider/calibration/sbe10344_20200306.txt'
-    ph_sn = 'sbe10344'
-    savefile = '/Users/lgarzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/phoxy_live-test.png'
-    main(deployment, ph_sn, savefile)
-    # arg_parser = argparse.ArgumentParser(description='Plot real time glider pH data',
-    #                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    #
-    # arg_parser.add_argument('-deployment',
-    #                         dest='deploy',
-    #                         default='ru30-20210226T1647',
-    #                         type=str,
-    #                         help='Glider deployment to plot. e.g. glider-yyyymmddTHHMM')
-    #
-    # arg_parser.add_argument('-calfile',
-    #                         dest='calfile',
-    #                         default='/Users/lgarzio/Documents/repo/lgarzio/phglider/calibration/sbe10344_20200306.txt',
-    #                         type=str,
-    #                         help='Calibration file for SBE pH sensor.')
-    #
-    # parsed_args = arg_parser.parse_args()
-    # sys.exit(main(parsed_args))
+    # deployment = 'ru30-20210226T1647'
+    # ph_sn = 'sbe10344'
+    # savefile = '/Users/lgarzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/phoxy_live-test.png'
+    # deployment = 'sbu01-20210226T1902'
+    # ph_sn = 'sbe10528'
+    # savefile = '/Users/lgarzio/Documents/rucool/Saba/gliderdata/2021/sbu01-20210226T1902/phoxy_live_sbu01-test.png'
+    # main(deployment, ph_sn, savefile)
+    arg_parser = argparse.ArgumentParser(description='Plot real time glider pH data',
+                                         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+
+    arg_parser.add_argument('-deploy',
+                            dest='deployment',
+                            type=str,
+                            help='Glider deployment to plot (glider-yyyymmddTHHMM), e.g. ru30-20210226T1647')
+
+    arg_parser.add_argument('-sn',
+                            dest='sensor_sn',
+                            type=str,
+                            help='pH sensor serial number, e.g. sbe10344')
+
+    arg_parser.add_argument('-s', '--save_file',
+                            dest='sfilename',
+                            type=str,
+                            help='Full file path to save directory and save filename')
+
+    parsed_args = arg_parser.parse_args()
+    sys.exit(main(parsed_args))
