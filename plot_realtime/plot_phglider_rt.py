@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 3/2/2021
-Last modified: 3/10/2021
+Last modified: 3/15/2021
 Plot realtime pH glider data variables: seawater temperature, salinity, chlorophyll, dissolved oxygen, pH reference
 voltage, and pH (not corrected for time lag)
 """
@@ -48,8 +48,8 @@ def main(args):
     ds = ds.sortby(ds.time)
 
     # read cal file
-    #calfile = cf.find_calfile(sensor_sn)
-    calfile = cf.find_calfile(args.sensor_sn)
+    # calfile = cf.find_calfile(deploy, sensor_sn)
+    calfile = cf.find_calfile(deploy, args.sensor_sn)
     with open(calfile) as json_file:
         cc = json.load(json_file)
 
