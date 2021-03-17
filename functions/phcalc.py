@@ -82,7 +82,7 @@ def phcalc(vrs, press, temp, salt, k0, k2, pcoefs):
     # AND CONTAINED IN THE POLYNOMIAL Pcoefs
     # pc = [flipud(Pcoefs);0]; % Matlab wants descending powers & n+1 (add 0)
     # pcorr = polyval(pc,Press)
-    k0TP = k0T + pcoefs   ############# need to test starting here
+    k0TP = k0T + pcoefs
 
     # pH on free scale then corrected to get to pH total on mol/kg sw scale
     # pHinsituFree = (Vrs - k0TP) / (R * Tk / F * ln10) + log(Cltotal) / ln10 + 2 * log10gammaHCLtP
