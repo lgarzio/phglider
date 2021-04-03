@@ -2,13 +2,13 @@
 
 """
 Author: Lori Garzio on 3/8/2021
-Last modified: 3/15/2021
+Last modified: 4/2/2021
 """
-import os
 import datetime as dt
 import glob
 import pandas as pd
 import numpy as np
+from erddapy import ERDDAP
 
 
 def find_calfile(deployment, sn):
@@ -20,9 +20,8 @@ def find_calfile(deployment, sn):
     :param sn: sensor serial number (e.g. 'sbe10344')
     :return: full file path to the most recent calibration file
     """
-    # dirname = os.path.dirname(os.getcwd())
-    dirname = '/home/lgarzio/repo/lgarzio/phglider'  # in server
-    caldir = os.path.join(dirname, 'calibration')
+    caldir = '/Users/garzio/Documents/repo/lgarzio/phglider/calibration'
+    #caldir = '/home/lgarzio/repo/lgarzio/phglider/calibration'  # in server
     calfiles = sorted(glob.glob(caldir + '/{}*.txt'.format(sn)))  # get all cal files for the serial number
     deploy_date = pd.to_datetime(deployment.split('-')[-1])
     if len(calfiles) > 1:
@@ -47,3 +46,15 @@ def find_calfile(deployment, sn):
         raise ValueError('No cal file found for {}'.format(sn))
 
     return cfile
+
+
+def get_erddap_dataset(server, ds_id, var_list=None):
+    e = ERDDAP(server=server,
+               protocol='tabledap',
+               response='nc')
+    e.dataset_id = ds_id
+    if var_list:
+        e.variables = var_list
+    ds = e.to_xarray()
+    ds = ds.sortby(ds.time)
+    return ds
