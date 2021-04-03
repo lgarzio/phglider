@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 3/2/2021
-Last modified: 3/15/2021
+Last modified: 4/2/2021
 Plot realtime pH glider data variables: seawater temperature, salinity, chlorophyll, dissolved oxygen, pH reference
 voltage, and pH (not corrected for time lag)
 """
@@ -13,7 +13,6 @@ import numpy as np
 import pandas as pd
 import datetime as dt
 import json
-from erddapy import ERDDAP
 import cmocean as cmo
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -23,27 +22,15 @@ import functions.common as cf
 plt.rcParams.update({'font.size': 16})
 
 
-def get_erddap_dataset(server, protocol, file_type, ds_id, var_list=None):
-    e = ERDDAP(server=server,
-               protocol=protocol,
-               response=file_type)
-    e.dataset_id = ds_id
-    if var_list:
-        e.variables = var_list
-    ds = e.to_xarray()
-    ds = ds.sortby(ds.time)
-    return ds
-
-
 #def main(deploy, sensor_sn, sfilename):
 def main(args):
     ru_server = 'http://slocum-data.marine.rutgers.edu//erddap'
     deploy = args.deployment
     print('\nPlotting {}'.format(deploy))
-    id = '{}-profile-sci-rt'.format(deploy)
+    glider_id = '{}-profile-sci-rt'.format(deploy)
     glider_vars = ['latitude', 'longitude', 'depth', 'conductivity', 'salinity', 'sci_water_pressure',
                    'temperature', 'sbe41n_ph_ref_voltage', 'chlorophyll_a', 'oxygen_concentration', 'water_depth']
-    ds = get_erddap_dataset(ru_server, 'tabledap', 'nc', id, glider_vars)
+    ds = cf.get_erddap_dataset(ru_server, glider_id, glider_vars)
     ds = ds.swap_dims({'obs': 'time'})
     ds = ds.sortby(ds.time)
 
