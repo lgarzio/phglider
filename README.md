@@ -1,6 +1,7 @@
 # pH glider
 
 Tools for processing and plotting glider data with a pH sensor on-board.
+
 Author: Lori Garzio (lgarzio@marine.rutgers.edu)
 
 ## Installation Instructions
