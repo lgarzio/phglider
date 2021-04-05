@@ -45,7 +45,7 @@ def main(fname, plt_interval):
     plotting_vars = [['ph_total', 'ph_total_shifted'],
                 ['oxygen_concentration', 'oxygen_concentration_shifted']]
 
-    sdir = os.path.join(os.path.dirname(fname), 'timeshift_figs_test')
+    sdir = os.path.join(os.path.dirname(fname), 'timeshift_figs')
     os.makedirs(sdir, exist_ok=True)
 
     daterange = pd.date_range(ds.time.values[0], ds.time.values[-1], freq=plt_interval)

@@ -37,18 +37,20 @@ def main(deploy, sensor_sn, shifts, fname):
     col_subset = ['conductivity', 'salinity', 'sci_water_pressure', 'temperature', 'sbe41n_ph_ref_voltage',
                            'chlorophyll_a', 'oxygen_concentration']
     for key, val in shifts.items():
-        if val > 0:  # if there is a shift calculated
             if key == 'ph':
                 varname = 'sbe41n_ph_ref_voltage'
-                ph_shiftname = '{}_shifted'.format(varname)
             elif key == 'oxygen':
                 varname = 'oxygen_concentration'
             da = pd.DataFrame(df[varname])
-            tm_shift = df.index - dt.timedelta(seconds=val)
-            da['time_shift'] = tm_shift
-            da.reset_index(drop=True, inplace=True)  # drop the original time index
-            da = da.rename(columns={varname: '{}_shifted'.format(varname), 'time_shift': 'time'})
-            da.set_index('time', inplace=True)
+            if val > 0:  # if there is a time shift calculated
+                tm_shift = df.index - dt.timedelta(seconds=val)
+                da['time_shift'] = tm_shift
+                da.reset_index(drop=True, inplace=True)  # drop the original time index
+                da = da.rename(columns={varname: '{}_shifted'.format(varname), 'time_shift': 'time'})
+                da = da.set_index('time')
+            else:  # if there is no time shift calculated, convert the array to nans
+                da[varname] = np.nan
+                da = da.rename(columns={varname: '{}_shifted'.format(varname)})
             df = df.merge(da, how='left', left_index=True, right_index=True)
             col_subset.append('{}_shifted'.format(varname))
 
@@ -65,14 +67,19 @@ def main(deploy, sensor_sn, shifts, fname):
     df['ph_total'] = phtot
     df[df['ph_total'] > 14] = np.nan
 
-    try:
-        phfree_sh, phtot_sh = phcalc.phcalc(df[ph_shiftname], df.sci_water_pressure_dbar, df.temperature, df.salinity,
-                                            cc['k0'], cc['k2'], df.f_p)
-        df['ph_total_shifted'] = phtot_sh
-        df[df['ph_total_shifted'] > 14] = np.nan
-    except NameError:
-        print('no pH shift defined')
+    if np.sum(~np.isnan(df['sbe41n_ph_ref_voltage_shifted'].values)) > 0:
+        phfree_sh, phtot_sh = phcalc.phcalc(df['sbe41n_ph_ref_voltage_shifted'], df.sci_water_pressure_dbar,
+                                            df.temperature, df.salinity, cc['k0'], cc['k2'], df.f_p)
+    else:
+        ph_empty = np.array(np.empty(len(phtot)))
+        ph_empty[:] = np.nan
+        phtot_sh = ph_empty
 
+    # add shifted pH (calculated) to dataframe
+    df['ph_total_shifted'] = phtot_sh
+    df[df['ph_total_shifted'] > 14] = np.nan
+
+    # convert the dataframe to an xarray dataset
     ds_shifted = df.to_xarray()
 
     # assign attributes from the original ds
@@ -80,12 +87,21 @@ def main(deploy, sensor_sn, shifts, fname):
         try:
             ds_shifted[varname] = ds_shifted[varname].assign_attrs(ds[varname].attrs)
         except KeyError:
-            if varname == 'sbe41n_ph_ref_voltage':
+            if varname == 'sbe41n_ph_ref_voltage_shifted':
                 ds_shifted[varname] = ds_shifted[varname].assign_attrs(ds['sbe41n_ph_ref_voltage'].attrs)
-                ds_shifted[varname].attrs['comment'] = 'Values time shifted by -{} seconds to correct for thermal lag.'.format(sensor_shifts['ph'])
+                if np.sum(~np.isnan(ds_shifted[varname].values)) > 0:
+                    com = 'Values time shifted by -{} seconds to correct for thermal lag.'.format(sensor_shifts['ph'])
+                else:
+                    del ds_shifted[varname].attrs['actual_range']
+                    com = 'No pH time shift calculated - use sbe41n_ph_ref_voltage variable'
+                ds_shifted[varname].attrs['comment'] = com
             if varname == 'oxygen_concentration_shifted':
                 ds_shifted[varname] = ds_shifted[varname].assign_attrs(ds['oxygen_concentration'].attrs)
-                ds_shifted[varname].attrs['comment'] = 'Values time shifted by -{} seconds to correct for thermal lag.'.format(sensor_shifts['oxygen'])
+                if np.sum(~np.isnan(ds_shifted[varname].values)) > 0:
+                    com = 'Values time shifted by -{} seconds to correct for thermal lag.'.format(sensor_shifts['oxygen'])
+                else:
+                    com = 'No oxygen time shift calculated - use oxygen_concentration variable'
+                ds_shifted[varname].attrs['comment'] = com
             if 'sci_water_pressure' in varname:
                 ds_shifted[varname] = ds_shifted[varname].assign_attrs(ds['sci_water_pressure'].attrs)
                 for item in ['actual_range', 'colorBarMaximum', 'colorBarMinimum', 'valid_max', 'valid_min']:
@@ -115,9 +131,12 @@ def main(deploy, sensor_sn, shifts, fname):
                 ds_shifted[varname].attrs['units'] = '1'
                 ds_shifted[varname].attrs['k0'] = cc['k0']
                 ds_shifted[varname].attrs['k2'] = cc['k2']
-                ds_shifted[varname].attrs['comment'] = 'pH calculated on the total scale using time shifted pH reference voltage, pressure_dbar, ' \
-                                                       'temperature, salinity, sensor calibration coefficients, and pressure ' \
-                                                       'polynomial coefficients.'
+                if np.sum(~np.isnan(ds_shifted[varname].values)) > 0:
+                    com = 'pH calculated on the total scale using time shifted pH reference voltage, pressure_dbar, ' \
+                          'temperature, salinity, sensor calibration coefficients, and pressure polynomial coefficients.'
+                else:  # if there is no pH shift
+                    com = 'No pH time shift calculated - use ph_total variable'
+                ds_shifted[varname].attrs['comment'] = com
 
     ds_shifted = ds_shifted.assign_coords(
         {'latitude': ds_shifted.latitude, 'longitude': ds_shifted.longitude, 'depth': ds_shifted.depth})
@@ -130,6 +149,6 @@ def main(deploy, sensor_sn, shifts, fname):
 if __name__ == '__main__':
     deployment = 'ru30-20210226T1647'
     ph_sn = 'sbe10344'
-    sensor_shifts = {'ph': 31, 'oxygen': 36}  # sensor_shifts = {'ph': 0, 'oxygen': 36}
+    sensor_shifts = {'ph': 31, 'oxygen': 36}  # sensor_shifts = {'ph': 31, 'oxygen': 36}
     ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/ru30-20210226T1647-profile-sci-delayed.nc'
     main(deployment, ph_sn, sensor_shifts, ncfile)
