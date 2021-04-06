@@ -2,12 +2,13 @@
 
 """
 Author: Lori Garzio on 4/3/2021
-Last modified: 4/3/2021
+Last modified: 4/6/2021
 Plot raw and time-shifted glider pH and oxygen data at user-specified intervals to evaluate the applied time shift.
 """
 
 import os
 import pandas as pd
+import numpy as np
 import xarray as xr
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
@@ -43,7 +44,14 @@ def plot_scatter(figure, axis, x, y, color, plt_ttl, cmin=None, cmax=None):
 def main(fname, plt_interval):
     ds = xr.open_dataset(fname)
     plotting_vars = [['ph_total', 'ph_total_shifted'],
-                ['oxygen_concentration', 'oxygen_concentration_shifted']]
+                     ['oxygen_concentration', 'oxygen_concentration_shifted']]
+
+    for pv in plotting_vars:
+        for p in pv:
+            if 'ph' in p:
+                da = ds[p]
+                da = da.where(da < 14, np.nan)  # convert pH values > 14 to nan
+                ds[p] = da
 
     sdir = os.path.join(os.path.dirname(fname), 'timeshift_figs')
     os.makedirs(sdir, exist_ok=True)
