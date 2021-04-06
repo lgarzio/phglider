@@ -233,5 +233,5 @@ def main(coord_lims, phu_lims, fname):
 if __name__ == '__main__':
     coordinate_lims = {'latitude': {'min': 36, 'max': 43}, 'longitude': {'min': -76, 'max': -66}}
     ph_user_lims = {'min': 6.5, 'max': 9}
-    ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/ru30-20210226T1647-profile-sci-delayed_shifted-test.nc'
+    ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/ru30-20210226T1647-profile-sci-delayed_shifted.nc'
     main(coordinate_lims, ph_user_lims, ncfile)
