@@ -30,3 +30,14 @@ Install the toolbox to the conda environment from the root directory of the phgl
 `pip install .`
 
 The toolbox should now be installed to your conda environment.
+
+## Glider Data Processing Steps
+1. [download_ds.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/download_ds.py): Download the delayed-mode dataset to your local machine.
+
+2. Calculate the best time shifts for pH and dissolved oxygen using MATLAB code bestShifts_updown.m
+
+3. [time_shift.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/time_shift.py): Apply the best time shifts calculated in step 2.
+
+4. [plot_time_shift.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/plot_time_shift.py): Evaluate the time shifts by plotting short time ranges (e.g. 3 hour) for pH and dissolved oxygen.
+
+5. [glider_qc.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/glider_qc.py): Run QARTOD QA/QC tests.
