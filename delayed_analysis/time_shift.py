@@ -65,7 +65,6 @@ def main(deploy, sensor_sn, shifts, fname):
     phfree, phtot = phcalc.phcalc(df.sbe41n_ph_ref_voltage, df.sci_water_pressure_dbar, df.temperature, df.salinity,
                                  cc['k0'], cc['k2'], df.f_p)
     df['ph_total'] = phtot
-    df[df['ph_total'] > 14] = np.nan
 
     if np.sum(~np.isnan(df['sbe41n_ph_ref_voltage_shifted'].values)) > 0:
         phfree_sh, phtot_sh = phcalc.phcalc(df['sbe41n_ph_ref_voltage_shifted'], df.sci_water_pressure_dbar,
@@ -77,7 +76,6 @@ def main(deploy, sensor_sn, shifts, fname):
 
     # add shifted pH (calculated) to dataframe
     df['ph_total_shifted'] = phtot_sh
-    df[df['ph_total_shifted'] > 14] = np.nan
 
     # convert the dataframe to an xarray dataset
     ds_shifted = df.to_xarray()
