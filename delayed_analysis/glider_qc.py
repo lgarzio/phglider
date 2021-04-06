@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 4/5/2021
-Last modified: 4/5/2021
+Last modified: 4/6/2021
 Modified from MATLAB code writted by Liza Wright-Fairbanks, Spring 2020.
 Based on IOOS manual for real-time quality control of pH data observations.
 Tests to be applied as a post-processing QA/QC measure.
@@ -48,9 +48,18 @@ def gross_range(dataset, vname, sensor_lims, user_lims=None):
     if user_lims:
         user_idx = np.logical_or(val.values > user_lims['max'], val.values < user_lims['min'])
         gross_range_flag[user_idx] = 3
+        add_com_user = 'SUSPECT: values < {} or > {}.'.format(user_lims['min'], user_lims['max'])
 
     # sensor range
-    sensor_idx = np.logical_or(val.values >= sensor_lims['max'], val.values <= sensor_lims['min'])
+    if np.logical_and(~np.isnan(sensor_lims['min']), ~np.isnan(sensor_lims['max'])):
+        sensor_idx = np.logical_or(val.values >= sensor_lims['max'], val.values <= sensor_lims['min'])
+        add_com_sen = 'BAD: values <= {} or >= {}.'.format(sensor_lims['min'], sensor_lims['max'])
+    elif ~np.isnan(sensor_lims['max']):
+        sensor_idx = val.values >= sensor_lims['max']
+        add_com_sen = 'BAD: values >= {}.'.format(sensor_lims['max'])
+    elif ~np.isnan(sensor_lims['min']):
+        sensor_idx = val.values <= sensor_lims['min']
+        add_com_sen = 'BAD: values <= {}.'.format(sensor_lims['min'])
     gross_range_flag[sensor_idx] = 4
 
     varname = 'qartod_{}_gross_range_flag'.format(val.name)
@@ -62,15 +71,9 @@ def gross_range(dataset, vname, sensor_lims, user_lims=None):
         vrange = '[{} {}]'.format(vmin, vmax)
     da = assign_attrs(da, vrange, 'gross range')
     if user_lims:
-        com = '{}. SUSPECT = values < {} or > {}. BAD = values <= {} or >= {}.'.format(da.attrs['comment'],
-                                                                                                   user_lims['min'],
-                                                                                                   user_lims['max'],
-                                                                                                   sensor_lims['min'],
-                                                                                                   sensor_lims['max'])
+        com = '{}. {} {}'.format(da.attrs['comment'], add_com_user, add_com_sen)
     else:
-        com = '{}. BAD = values <= {} or >= {}.'.format(da.attrs['comment'],
-                                                        sensor_lims['min'],
-                                                        sensor_lims['max'])
+        com = '{}. {}'.format(da.attrs['comment'], add_com_sen)
     da.attrs['comment'] = com
     dataset[varname] = da
 
@@ -225,6 +228,14 @@ def main(coord_lims, phu_lims, fname):
     ds = gross_range(ds, 'ph_total', ph_sensor_lims, phu_lims)
     if np.sum(~np.isnan(ds.ph_total_shifted.values)) > 0:
         ds = gross_range(ds, 'ph_total_shifted', ph_sensor_lims, phu_lims)
+
+    ph_volt_lims = {'min': np.nan, 'max': 0}
+    ds = gross_range(ds, 'sbe41n_ph_ref_voltage', ph_volt_lims)
+    if np.sum(~np.isnan(ds.sbe41n_ph_ref_voltage_shifted.values)) > 0:
+        ds = gross_range(ds, 'sbe41n_ph_ref_voltage_shifted', ph_volt_lims)
+
+    chl_lims = {'min': 0, 'max': 50}
+    ds = gross_range(ds, 'chlorophyll_a', chl_lims)
 
     # Test 6: QARTOD Spike Test
     ph_thresholds = {'low': 0.1, 'high': 0.2}
