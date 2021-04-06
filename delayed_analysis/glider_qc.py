@@ -28,13 +28,13 @@ def assign_attrs(data_array, data_range, test):
     return data_array
 
 
-def gross_range(dataset, vname, user_lims, sensor_lims):
+def gross_range(dataset, vname, sensor_lims, user_lims=None):
     """
     Test 4: QARTOD test for sensor and user pH value ranges
     :param dataset: xarray dataset
     :param vname: variable name (e.g. ph_total)
-    :param user_lims: user-defined minimum and maximum data limits (e.g. for pH min: 6.5, max : 9)
     :param sensor_lims: minimum and maximum sensor limits (e.g. for pH min: 0, max: 14)
+    :param user_lims: optional user-defined minimum and maximum data limits (e.g. for pH min: 6.5, max : 9)
     :return: dataset with the pH gross range flag variable added
     """
     val = dataset[vname]
@@ -45,8 +45,9 @@ def gross_range(dataset, vname, user_lims, sensor_lims):
     gross_range_flag[nan_idx] = 9
 
     # user range
-    user_idx = np.logical_or(val.values > user_lims['max'], val.values < user_lims['min'])
-    gross_range_flag[user_idx] = 3
+    if user_lims:
+        user_idx = np.logical_or(val.values > user_lims['max'], val.values < user_lims['min'])
+        gross_range_flag[user_idx] = 3
 
     # sensor range
     sensor_idx = np.logical_or(val.values >= sensor_lims['max'], val.values <= sensor_lims['min'])
@@ -60,11 +61,17 @@ def gross_range(dataset, vname, user_lims, sensor_lims):
     else:
         vrange = '[{} {}]'.format(vmin, vmax)
     da = assign_attrs(da, vrange, 'gross range')
-    da.attrs['comment'] = '{}. SUSPECT = values < {} or > {}. BAD = values <= {} or >= {}.'.format(da.attrs['comment'],
+    if user_lims:
+        com = '{}. SUSPECT = values < {} or > {}. BAD = values <= {} or >= {}.'.format(da.attrs['comment'],
                                                                                                    user_lims['min'],
                                                                                                    user_lims['max'],
                                                                                                    sensor_lims['min'],
                                                                                                    sensor_lims['max'])
+    else:
+        com = '{}. BAD = values <= {} or >= {}.'.format(da.attrs['comment'],
+                                                        sensor_lims['min'],
+                                                        sensor_lims['max'])
+    da.attrs['comment'] = com
     dataset[varname] = da
 
     return dataset
@@ -215,9 +222,9 @@ def main(coord_lims, phu_lims, fname):
 
     # Test 4: QARTOD Gross Range Test
     ph_sensor_lims = {'min': 0, 'max': 14}
-    ds = gross_range(ds, 'ph_total', phu_lims, ph_sensor_lims)
+    ds = gross_range(ds, 'ph_total', ph_sensor_lims, phu_lims)
     if np.sum(~np.isnan(ds.ph_total_shifted.values)) > 0:
-        ds = gross_range(ds, 'ph_total_shifted', phu_lims, ph_sensor_lims)
+        ds = gross_range(ds, 'ph_total_shifted', ph_sensor_lims, phu_lims)
 
     # Test 6: QARTOD Spike Test
     ph_thresholds = {'low': 0.1, 'high': 0.2}
