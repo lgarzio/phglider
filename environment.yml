@@ -11,5 +11,6 @@ dependencies:
   - cmocean==2.0
   - numpy==1.20.1
   - xarray==0.17.0
+  - scikit-learn==0.24.1
   - pip:
     - pyco2sys==1.6.0

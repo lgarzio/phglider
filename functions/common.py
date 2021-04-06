@@ -9,6 +9,7 @@ import glob
 import pandas as pd
 import numpy as np
 from erddapy import ERDDAP
+from sklearn.linear_model import LinearRegression
 
 
 def find_calfile(deployment, sn):
@@ -58,3 +59,21 @@ def get_erddap_dataset(server, ds_id, var_list=None):
     ds = e.to_xarray()
     ds = ds.sortby(ds.time)
     return ds
+
+
+def linear_regression(x, y):
+    """
+    :param x: independent variable
+    :param y: dependent variable
+    :return: r-squared, slope, intercept, and the predicted y-values
+    """
+
+    x = x.reshape((-1, 1))
+    model = LinearRegression().fit(x, y)
+    r_squared = model.score(x, y)
+    slope = model.coef_
+    intercept = model.intercept_
+
+    y_pred = model.predict(x)
+
+    return r_squared, slope[0], intercept, y_pred

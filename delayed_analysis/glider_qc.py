@@ -3,7 +3,7 @@
 """
 Author: Lori Garzio on 4/5/2021
 Last modified: 4/6/2021
-Modified from MATLAB code writted by Liza Wright-Fairbanks, Spring 2020.
+Modified from MATLAB code written by Liza Wright-Fairbanks, Spring 2020.
 Based on IOOS manual for real-time quality control of pH data observations.
 Tests to be applied as a post-processing QA/QC measure.
 """
