@@ -4,6 +4,8 @@ Tools for processing and plotting glider data with a pH sensor on-board.
 
 Author: Lori Garzio (lgarzio@marine.rutgers.edu)
 
+**This repo is under development**
+
 ## Installation Instructions
 Add the channel conda-forge to your .condarc. You can find out more about conda-forge from their website: https://conda-forge.org/
 
