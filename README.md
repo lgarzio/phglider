@@ -46,7 +46,7 @@ The toolbox should now be installed to your conda environment.
 
 6. [glider_proc_qc.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/glider_proc_qc.py): Calculate TA and CO2SYS variables, and run QARTOD QA/QC tests.
 
-### Citations
+## Citations
 Humphreys, M. P., Gregor, L., Pierrot, D., van Heuven, S. M. A. C., Lewis, E. R., and Wallace, D. W. R. (2020). [PyCO2SYS](https://pypi.org/project/PyCO2SYS/): marine carbonate system calculations in Python. Zenodo. doi:10.5281/zenodo.3744275.
 
 Lewis, E. and Wallace, D. W. R. (1998) Program Developed for CO2 System Calculations, ORNL/CDIAC-105, Carbon Dioxide Inf. Anal. Cent., Oak Ridge Natl. Lab., Oak Ridge, Tenn., 38 pp., [https://salish-sea.pnnl.gov/media/ORNL-CDIAC-105.pdf](https://salish-sea.pnnl.gov/media/ORNL-CDIAC-105.pdf)
