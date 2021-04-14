@@ -2,18 +2,20 @@
 
 """
 Author: Lori Garzio on 4/6/2021
-Last modified: 4/6/2021
+Last modified: 4/14/2021
 Modified from MATLAB code written by Liza Wright-Fairbanks.
-Calculate the linear relationship between TA and salinity from in-situ water sampling data taken during glider
-deployment and recovery (for nearshore samples = lower salinity region) and historical ECOA water sampling data (for
-the offshore = higher salinity region).
+Calculate the linear relationship between Total Alkalinity and salinity from in-situ water sampling data taken during
+glider deployment and recovery (for nearshore samples = lower salinity region) and historical ECOA water sampling data
+(for the offshore = higher salinity region).
+In-situ TA data are in units of umol/kg.
 ECOA discrete data comes from discrete sample TA analysis during the 2015 East Coast Ocean Acidification cruise.
-Samples were collected along 3 lines on the Mid-Atlantic shelf. Only samples taken at depths shallower than 200 m are
-included (max glider depth)
+Samples were collected along 3 lines on the Mid-Atlantic shelf. Only ECOA samples taken at depths shallower than 200 m
+are included (max glider depth)
 """
 import os
 import pandas as pd
 import numpy as np
+import json
 import matplotlib.pyplot as plt
 import functions.common as cf
 
@@ -23,7 +25,7 @@ def main(deploy, ecoa_discrete, glider_discrete, sDir):
     glider_df = pd.read_csv(glider_discrete)
 
     discrete_sal = np.append(np.array(ecoa_df.discrete_sal), np.array(glider_df.discrete_sal))
-    discrete_ta = np.append(np.array(ecoa_df.discrete_ta), np.array(glider_df.discrete_ta))
+    discrete_ta = np.append(np.array(ecoa_df.discrete_ta), np.array(glider_df.discrete_ta))  # units = umol/kg
 
     r_sq, m, b, y_predict = cf.linear_regression(discrete_sal, discrete_ta)
     equation = 'y = {}x + {}'.format(np.round(m, 2), np.round(b, 2))
@@ -41,6 +43,14 @@ def main(deploy, ecoa_discrete, glider_discrete, sDir):
     sname = os.path.join(sDir, '{}_ta_sal_regression.png'.format(deploy))
     plt.savefig(sname, dpi=200)
     plt.close()
+
+    values = {'m': m,
+              'b': b
+              }
+
+    fname = '{}_ta_equation.txt'.format(deploy)
+    with open(fname, 'w') as outfile:
+        json.dump(values, outfile)
 
 
 if __name__ == '__main__':
