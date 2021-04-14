@@ -2,14 +2,48 @@
 
 """
 Author: Lori Garzio on 3/8/2021
-Last modified: 4/2/2021
+Last modified: 4/14/2021
 """
 import datetime as dt
 import glob
+import json
 import pandas as pd
 import numpy as np
 from erddapy import ERDDAP
 from sklearn.linear_model import LinearRegression
+
+
+def calculate_ta(deployment, salinity):
+    """
+    Calculate Total Alkalinity from salinity using a linear relationship determined from in-situ water sampling data
+    taken during glider deployment and recovery. See ../ta_equation/ta_sal_regression.py
+    :param deployment: glider deployment, including deployment date (e.g. ru30-20210226T1647)
+    :param salinity: data array of salinity data from glider
+    :return: data array of calculated Total Alkalinity
+    """
+    # find TA-salinity equation file calculates from ta_sal_regression.py
+    tadir = '/Users/garzio/Documents/repo/lgarzio/phglider/ta_equation'
+    # tadir = '/home/lgarzio/repo/lgarzio/phglider/ta_equation'  # in server
+    tafiles = sorted(glob.glob(tadir + '/{}_ta_equation-test.txt'.format(deployment)))
+    if len(tafiles) > 1:
+        raise ValueError('More than 1 TA-salinity equation file found for deployment: {}'.format(deployment))
+    elif len(tafiles) < 1:
+        raise ValueError('No TA-salinity equation file found for deployment: {}'.format(deployment))
+
+    ta_equ_file = tafiles[0]
+    with open(ta_equ_file) as json_file:
+        ta_equ = json.load(json_file)
+
+    ta = ta_equ['m'] * salinity + ta_equ['b']
+    ta.name = 'total_alkalinity'
+    ta.attrs['units'] = 'umol/kg'
+    ta.attrs['long_name'] = 'Total Alkalinity'
+    ta.attrs['ancillary_variables'] = 'salinity'
+    ta.attrs['observation_type'] = 'calculated'
+    ta.attrs['comment'] = 'Calculated from salinity using a linear relationship determined from in-situ water ' \
+                          'sampling data taken during glider deployment and recovery.'
+
+    return ta
 
 
 def find_calfile(deployment, sn):

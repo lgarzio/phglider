@@ -42,6 +42,6 @@ The toolbox should now be installed to your conda environment.
 
 4. [plot_time_shift.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/plot_time_shift.py): Evaluate the time shifts by plotting short time ranges (e.g. 3 hour) for pH and dissolved oxygen.
 
-5. [ta_sal_regression.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/ta_sal_regression.py): Calculate the best fit TA-salinity linear regression when the discrete samples are analyzed.
+5. [ta_sal_regression.py](https://github.com/lgarzio/phglider/blob/master/ta_equation/ta_sal_regression.py): Calculate the best fit TA-salinity linear regression when the discrete samples are analyzed.
 
-6. [glider_qc.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/glider_qc.py): Run QARTOD QA/QC tests.
+6. [glider_proc_qc.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/glider_proc_qc.py): Calculate TA and CO2SYS variables, and run QARTOD QA/QC tests.

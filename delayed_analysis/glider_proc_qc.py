@@ -2,16 +2,19 @@
 
 """
 Author: Lori Garzio on 4/5/2021
-Last modified: 4/6/2021
+Last modified: 4/14/2021
 Modified from MATLAB code written by Liza Wright-Fairbanks, Spring 2020.
 Based on IOOS manual for real-time quality control of pH data observations.
 Tests to be applied as a post-processing QA/QC measure.
+Also calculate TA using salinity data.
 """
 
 import os
+import json
 import numpy as np
 import pandas as pd
 import xarray as xr
+import functions.common as cf
 pd.set_option('display.width', 320, "display.max_columns", 10)  # for display in pycharm console
 
 
@@ -202,10 +205,15 @@ def time_test(da, sdir):
     print('\n{} data gaps >1 hour: {}'.format(da.name, len(gap_list)))
 
 
-def main(coord_lims, phu_lims, fname):
+def main(deploy, coord_lims, phu_lims, fname):
     ds = xr.open_dataset(fname)
     savedir = os.path.join(os.path.dirname(fname), 'qc')
     os.makedirs(savedir, exist_ok=True)
+
+    # calculate Total Alkalinity and add to dataset
+    # TA calculated from salinity using a linear relationship determined from in-situ water sampling data taken during
+    # glider deployment and recovery. See ../ta_equation/ta_sal_regression.py
+    ta = cf.calculate_ta(deploy, ds.salinity)
 
     # Test 1: QARTOD Time Test
     time_test(ds['ph_total'], savedir)
@@ -237,11 +245,11 @@ def main(coord_lims, phu_lims, fname):
     chl_lims = {'min': 0, 'max': 50}
     ds = gross_range(ds, 'chlorophyll_a', chl_lims)
 
-    # Test 6: QARTOD Spike Test
-    ph_thresholds = {'low': 0.1, 'high': 0.2}
-    ds = spike_test(ds, 'ph_total', ph_thresholds)
-    if np.sum(~np.isnan(ds.ph_total_shifted.values)) > 0:
-        ds = spike_test(ds, 'ph_total_shifted', ph_thresholds)
+    # # Test 6: QARTOD Spike Test
+    # ph_thresholds = {'low': 0.1, 'high': 0.2}
+    # ds = spike_test(ds, 'ph_total', ph_thresholds)
+    # if np.sum(~np.isnan(ds.ph_total_shifted.values)) > 0:
+    #     ds = spike_test(ds, 'ph_total_shifted', ph_thresholds)
 
     # Test 7: Rate of Change Test
 
@@ -249,7 +257,8 @@ def main(coord_lims, phu_lims, fname):
 
 
 if __name__ == '__main__':
+    deployment = 'ru30-20210226T1647'
     coordinate_lims = {'latitude': {'min': 36, 'max': 43}, 'longitude': {'min': -76, 'max': -66}}
     ph_user_lims = {'min': 6.5, 'max': 9}
     ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/ru30-20210226T1647-profile-sci-delayed_shifted.nc'
-    main(coordinate_lims, ph_user_lims, ncfile)
+    main(deployment, coordinate_lims, ph_user_lims, ncfile)
