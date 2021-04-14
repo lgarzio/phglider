@@ -10,7 +10,6 @@ Also calculate TA using salinity data.
 """
 
 import os
-import json
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -18,7 +17,7 @@ import functions.common as cf
 pd.set_option('display.width', 320, "display.max_columns", 10)  # for display in pycharm console
 
 
-def assign_attrs(data_array, data_range, test):
+def assign_qartod_attrs(data_array, data_range, test):
     data_array.attrs['actual_range'] = data_range
     data_array.attrs['comment'] = 'QARTOD {} test'.format(test)
     data_array.attrs['flag_meanings'] = 'GOOD NOT_EVALUATED SUSPECT BAD MISSING'
@@ -72,7 +71,7 @@ def gross_range(dataset, vname, sensor_lims, user_lims=None):
         vrange = '[{}]'.format(vmin)
     else:
         vrange = '[{} {}]'.format(vmin, vmax)
-    da = assign_attrs(da, vrange, 'gross range')
+    da = assign_qartod_attrs(da, vrange, 'gross range')
     if user_lims:
         com = '{}. {} {}'.format(da.attrs['comment'], add_com_user, add_com_sen)
     else:
@@ -116,7 +115,7 @@ def location_test(dataset, coordlims):
             vrange = '[{}]'.format(vmin)
         else:
             vrange = '[{} {}]'.format(vmin, vmax)
-        da = assign_attrs(da, vrange, 'location')
+        da = assign_qartod_attrs(da, vrange, 'location')
         dataset[varname] = da
 
     return dataset
@@ -169,7 +168,7 @@ def spike_test(dataset, vname, thresholds):
         vrange = '[{}]'.format(vmin)
     else:
         vrange = '[{} {}]'.format(vmin, vmax)
-    da = assign_attrs(da, vrange, 'spike')
+    da = assign_qartod_attrs(da, vrange, 'spike')
     da.attrs['comment'] = '{}. SUSPECT = threshold {}. BAD = threshold {}'.format(da.attrs['comment'],
                                                                                   thresholds['low'],
                                                                                   thresholds['high'])
@@ -214,6 +213,37 @@ def main(deploy, coord_lims, phu_lims, fname):
     # TA calculated from salinity using a linear relationship determined from in-situ water sampling data taken during
     # glider deployment and recovery. See ../ta_equation/ta_sal_regression.py
     ta = cf.calculate_ta(deploy, ds.salinity)
+    ds['total_alkalinity'] = ta
+
+    # run CO2SYS
+    if np.sum(~np.isnan(ds.ph_total_shifted.values)) > 0:
+        ph = ds.ph_total_shifted.values
+    else:
+        ph = ds.ph_total.values
+    omega_arag, pco2, revelle = cf.run_co2sys_ta_ph(ta.values, ph, ds.salinity.values, ds.temperature.values,
+                                                    ds.sci_water_pressure_dbar.values)
+
+    # add the variables to the dataset
+    da = xr.DataArray(omega_arag, coords=ta.coords, dims=ta.dims, name='saturation_aragonite')
+    da.attrs['observation_type'] = 'calculated'
+    da.attrs['units'] = '1'
+    da.attrs['long_name'] = 'Aragonite Saturation State'
+    da.attrs['comment'] = 'Calculated using the PyCO2SYS function with inputs of Total Alkalinity and pH'
+    ds['saturation_aragonite'] = da
+
+    da = xr.DataArray(pco2, coords=ta.coords, dims=ta.dims, name='pco2_calculated')
+    da.attrs['observation_type'] = 'calculated'
+    da.attrs['units'] = 'uatm'
+    da.attrs['long_name'] = 'pCO2'
+    da.attrs['comment'] = 'Calculated using the PyCO2SYS function with inputs of Total Alkalinity and pH'
+    ds['pco2_calculated'] = da
+
+    da = xr.DataArray(revelle, coords=ta.coords, dims=ta.dims, name='revelle_factor')
+    da.attrs['observation_type'] = 'calculated'
+    da.attrs['units'] = '1'
+    da.attrs['long_name'] = 'Revelle Factor'
+    da.attrs['comment'] = 'Calculated using the PyCO2SYS function with inputs of Total Alkalinity and pH'
+    ds['revelle_factor'] = da
 
     # Test 1: QARTOD Time Test
     time_test(ds['ph_total'], savedir)
@@ -245,11 +275,11 @@ def main(deploy, coord_lims, phu_lims, fname):
     chl_lims = {'min': 0, 'max': 50}
     ds = gross_range(ds, 'chlorophyll_a', chl_lims)
 
-    # # Test 6: QARTOD Spike Test
-    # ph_thresholds = {'low': 0.1, 'high': 0.2}
-    # ds = spike_test(ds, 'ph_total', ph_thresholds)
-    # if np.sum(~np.isnan(ds.ph_total_shifted.values)) > 0:
-    #     ds = spike_test(ds, 'ph_total_shifted', ph_thresholds)
+    # Test 6: QARTOD Spike Test
+    ph_thresholds = {'low': 0.1, 'high': 0.2}
+    ds = spike_test(ds, 'ph_total', ph_thresholds)
+    if np.sum(~np.isnan(ds.ph_total_shifted.values)) > 0:
+        ds = spike_test(ds, 'ph_total_shifted', ph_thresholds)
 
     # Test 7: Rate of Change Test
 
