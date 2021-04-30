@@ -85,6 +85,16 @@ def find_calfile(deployment, sn):
     return cfile
 
 
+def find_configs(deployment):
+    configdir = '/Users/garzio/Documents/repo/lgarzio/phglider/config'
+    # configdir = '/home/lgarzio/repo/lgarzio/phglider/config'  # in server
+    global_attributes = '{}/{}/global_attributes.json'.format(configdir, deployment)
+    variable_attrs = '{}/{}/variable_attrs.json'.format(configdir, deployment)
+    instruments = '{}/{}/instruments.json'.format(configdir, deployment)
+
+    return global_attributes, variable_attrs, instruments
+
+
 def get_erddap_dataset(server, ds_id, var_list=None):
     e = ERDDAP(server=server,
                protocol='tabledap',
