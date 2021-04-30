@@ -204,7 +204,8 @@ def time_test(da, sdir):
     print('\n{} data gaps >1 hour: {}'.format(da.name, len(gap_list)))
 
 
-def main(deploy, coord_lims, phu_lims, fname):
+def main(coord_lims, phu_lims, fname):
+    deploy = '-'.join(fname.split('/')[-1].split('-')[0:2])
     ds = xr.open_dataset(fname)
     savedir = os.path.join(os.path.dirname(fname), 'qc')
     os.makedirs(savedir, exist_ok=True)
@@ -245,6 +246,29 @@ def main(deploy, coord_lims, phu_lims, fname):
     da.attrs['comment'] = 'Calculated using the PyCO2SYS function with inputs of Total Alkalinity and pH'
     ds['revelle_factor'] = da
 
+    # calculate oxygen concentration in mg/L
+    da = ds.oxygen_concentration * 32 / 1000  # change oxygen from umol/L to mg/L
+    da.name = 'oxygen_concentration_mgL'
+    da.attrs['observation_type'] = 'calculated'
+    da.attrs['units'] = 'mg L-1'
+    da.attrs['long_name'] = 'Dissolved Oxygen'
+    da.attrs['ancillary_variables'] = 'sci_oxy4_oxygen'
+    da.attrs['source_sensor'] = 'sci_oxy4_oxygen'
+    da.attrs['standard_name'] = 'mass_concentration_of_chlorophyll_a_in_seawater'
+    da.attrs['comment'] = 'transformed from umol/L to mg/L'
+    ds['oxygen_concentration_mgL'] = da
+
+    da = ds.oxygen_concentration_shifted * 32 / 1000  # change oxygen from umol/L to mg/L
+    da.name = 'oxygen_concentration_mgL_shifted'
+    da.attrs['observation_type'] = 'calculated'
+    da.attrs['units'] = 'mg L-1'
+    da.attrs['long_name'] = 'Dissolved Oxygen'
+    da.attrs['ancillary_variables'] = 'sci_oxy4_oxygen'
+    da.attrs['source_sensor'] = 'sci_oxy4_oxygen'
+    da.attrs['standard_name'] = 'mass_concentration_of_chlorophyll_a_in_seawater'
+    da.attrs['comment'] = 'transformed from umol/L to mg/L. {}'.format(ds.oxygen_concentration_shifted.comment)
+    ds['oxygen_concentration_mgL_shifted'] = da
+
     # Test 1: QARTOD Time Test
     time_test(ds['ph_total'], savedir)
     time_test(ds['sbe41n_ph_ref_voltage'], savedir)
@@ -281,14 +305,13 @@ def main(deploy, coord_lims, phu_lims, fname):
     if np.sum(~np.isnan(ds.ph_total_shifted.values)) > 0:
         ds = spike_test(ds, 'ph_total_shifted', ph_thresholds)
 
-    # Test 7: Rate of Change Test
+    # Test 7: Rate of Change Test - TODO
 
     ds.to_netcdf('{}_qc.nc'.format(fname.split('.')[0]))
 
 
 if __name__ == '__main__':
-    deployment = 'ru30-20210226T1647'
     coordinate_lims = {'latitude': {'min': 36, 'max': 43}, 'longitude': {'min': -76, 'max': -66}}
     ph_user_lims = {'min': 6.5, 'max': 9}
     ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/ru30-20210226T1647-profile-sci-delayed_shifted.nc'
-    main(deployment, coordinate_lims, ph_user_lims, ncfile)
+    main(coordinate_lims, ph_user_lims, ncfile)

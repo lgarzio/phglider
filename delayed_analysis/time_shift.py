@@ -17,7 +17,8 @@ import functions.common as cf
 pd.set_option('display.width', 320, "display.max_columns", 10)  # for display in pycharm console
 
 
-def main(deploy, sensor_sn, shifts, fname):
+def main(sensor_sn, shifts, fname):
+    deploy = '-'.join(fname.split('/')[-1].split('-')[0:2])
     ds = xr.open_dataset(fname)
     ds = ds.drop_vars(names=['profile_id', 'rowSize'])
     ds = ds.swap_dims({'obs': 'time'})
@@ -88,7 +89,7 @@ def main(deploy, sensor_sn, shifts, fname):
             if varname == 'sbe41n_ph_ref_voltage_shifted':
                 ds_shifted[varname] = ds_shifted[varname].assign_attrs(ds['sbe41n_ph_ref_voltage'].attrs)
                 if np.sum(~np.isnan(ds_shifted[varname].values)) > 0:
-                    com = 'Values time shifted by -{} seconds to correct for thermal lag.'.format(sensor_shifts['ph'])
+                    com = 'values shifted by -{} seconds before calculating pH to correct for thermal lag.'.format(sensor_shifts['ph'])
                 else:
                     del ds_shifted[varname].attrs['actual_range']
                     com = 'No pH time shift calculated - use sbe41n_ph_ref_voltage variable'
@@ -96,7 +97,7 @@ def main(deploy, sensor_sn, shifts, fname):
             if varname == 'oxygen_concentration_shifted':
                 ds_shifted[varname] = ds_shifted[varname].assign_attrs(ds['oxygen_concentration'].attrs)
                 if np.sum(~np.isnan(ds_shifted[varname].values)) > 0:
-                    com = 'Values time shifted by -{} seconds to correct for thermal lag.'.format(sensor_shifts['oxygen'])
+                    com = 'values shifted by -{} seconds to correct for thermal lag.'.format(sensor_shifts['oxygen'])
                 else:
                     com = 'No oxygen time shift calculated - use oxygen_concentration variable'
                 ds_shifted[varname].attrs['comment'] = com
@@ -121,20 +122,20 @@ def main(deploy, sensor_sn, shifts, fname):
                 ds_shifted[varname].attrs['units'] = '1'
                 ds_shifted[varname].attrs['k0'] = cc['k0']
                 ds_shifted[varname].attrs['k2'] = cc['k2']
-                ds_shifted[varname].attrs['comment'] = 'pH calculated on the total scale using pH reference voltage, pressure_dbar ,' \
-                                                       'temperature, salinity, sensor calibration coefficients, and pressure ' \
-                                                       'polynomial coefficients.'
+                ds_shifted[varname].attrs['comment'] = 'calculated from instrument calibration coefficents, pressure, salinity, temperature, and measured reference voltage'
             if varname == 'ph_total_shifted':
                 ds_shifted[varname].attrs['observation_type'] = 'calculated'
                 ds_shifted[varname].attrs['units'] = '1'
                 ds_shifted[varname].attrs['k0'] = cc['k0']
                 ds_shifted[varname].attrs['k2'] = cc['k2']
                 if np.sum(~np.isnan(ds_shifted[varname].values)) > 0:
-                    com = 'pH calculated on the total scale using time shifted pH reference voltage, pressure_dbar, ' \
-                          'temperature, salinity, sensor calibration coefficients, and pressure polynomial coefficients.'
+                    com = 'calculated from instrument calibration coefficents, pressure, salinity, temperature, and ' \
+                          'measured reference voltage (shifted -{} seconds).'.format(sensor_shifts['ph'])
                 else:  # if there is no pH shift
                     com = 'No pH time shift calculated - use ph_total variable'
                 ds_shifted[varname].attrs['comment'] = com
+
+    ds_shifted['time'] = ds_shifted['time'].assign_attrs(ds['time'].attrs)
 
     ds_shifted = ds_shifted.assign_coords(
         {'latitude': ds_shifted.latitude, 'longitude': ds_shifted.longitude, 'depth': ds_shifted.depth})
@@ -145,8 +146,7 @@ def main(deploy, sensor_sn, shifts, fname):
 
 
 if __name__ == '__main__':
-    deployment = 'ru30-20210226T1647'
     ph_sn = 'sbe10344'
     sensor_shifts = {'ph': 31, 'oxygen': 36}  # sensor_shifts = {'ph': 31, 'oxygen': 36}
     ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/ru30-20210226T1647-profile-sci-delayed.nc'
-    main(deployment, ph_sn, sensor_shifts, ncfile)
+    main(ph_sn, sensor_shifts, ncfile)
