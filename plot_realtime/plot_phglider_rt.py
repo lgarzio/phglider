@@ -46,9 +46,11 @@ def main(args):
     temp = ds.temperature.values
     sal = ds.salinity.values
     vrs = ds.sbe41n_ph_ref_voltage.values
-    vrs[vrs == 0.0] = np.nan  # convert voltages of zero to nan
+    vrs[vrs == 0.0] = np.nan  # convert zero values to nan
     oxy = (ds.oxygen_concentration.values * 32) / 1000  # change oxygen from umol/L to mg/L
+    oxy[oxy == 0.0] = np.nan  # convert zero values to nan
     chl = ds.chlorophyll_a.values
+    chl[chl == 0.0] = np.nan  # convert zero values to nan
 
     # calculate pH
     ph = np.array([])
@@ -80,9 +82,15 @@ def main(args):
         cb = plt.colorbar(xc, cax=cax)
 
         # format x-axis
-        delta = dt.timedelta(hours=6)
-        t0 = pd.to_datetime(tm[0]) + delta
-        tf = pd.to_datetime(tm[-1]) - delta
+        t_start = pd.to_datetime(tm[0])
+        t_end = pd.to_datetime(tm[-1])
+        if t_end - t_start < dt.timedelta(days=5):
+            t0 = t_start
+            tf = t_end
+        else:
+            delta = dt.timedelta(hours=6)
+            t0 = t_start + delta
+            tf = t_end - delta
         xdates = pd.date_range(t0, tf, periods=6)  # create 6 time bins
         info['axes'].set_xticks(xdates)
         xfmt = mdates.DateFormatter('%d-%b')
@@ -112,12 +120,12 @@ def main(args):
 
 
 if __name__ == '__main__':
-    # deployment = 'ru30-20210226T1647'
+    # deployment = 'ru30-20210503T1929'
     # ph_sn = 'sbe10344'
-    # savefile = '/Users/lgarzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/phoxy_live-test.png'
+    # savefile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210503T1929/rt_plotting/phoxy_live.png'
     # deployment = 'sbu01-20210226T1902'
     # ph_sn = 'sbe10528'
-    # savefile = '/Users/lgarzio/Documents/rucool/Saba/gliderdata/2021/sbu01-20210226T1902/phoxy_live_sbu01-test.png'
+    # savefile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/sbu01-20210226T1902/phoxy_live_sbu01-test.png'
     # main(deployment, ph_sn, savefile)
     arg_parser = argparse.ArgumentParser(description='Plot real time glider pH data',
                                          formatter_class=argparse.ArgumentDefaultsHelpFormatter)
