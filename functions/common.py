@@ -47,6 +47,15 @@ def calculate_ta(deployment, salinity):
     return ta
 
 
+def glider_region(ds):
+    extent = [np.nanmin(ds.longitude.values) - 1.75, np.nanmax(ds.longitude.values) + 1.75,
+              np.nanmin(ds.latitude.values) - 1.5, np.nanmax(ds.latitude.values) + 1.5]
+    region = dict()
+    region['extent'] = extent
+
+    return region
+
+
 def find_calfile(deployment, sn):
     """
     Searches the calibration files located in phglider/calibration and returns the most recent calibration file for a
