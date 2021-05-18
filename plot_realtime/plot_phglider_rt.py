@@ -30,7 +30,10 @@ def main(args):
     glider_id = '{}-profile-sci-rt'.format(deploy)
     glider_vars = ['latitude', 'longitude', 'depth', 'conductivity', 'salinity', 'sci_water_pressure',
                    'temperature', 'sbe41n_ph_ref_voltage', 'chlorophyll_a', 'oxygen_concentration', 'water_depth']
-    ds = cf.get_erddap_dataset(ru_server, glider_id, glider_vars)
+
+    gargs = dict()
+    gargs['variables'] = glider_vars
+    ds = cf.get_erddap_dataset(ru_server, glider_id, **gargs)
     ds = ds.swap_dims({'obs': 'time'})
     ds = ds.sortby(ds.time)
 

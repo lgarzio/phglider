@@ -6,7 +6,10 @@ Last modified: 5/12/2021
 """
 import numpy as np
 import pandas as pd
+import itertools
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+import matplotlib.cm as cm
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 from cartopy.mpl.gridliner import LONGITUDE_FORMATTER, LATITUDE_FORMATTER
@@ -99,3 +102,84 @@ def glider_track(fig, ax, ds, region, bathy=None, landcolor=None, title=None, cu
     cbar.ax.set_yticklabels(pd.to_datetime(cbar.ax.get_yticks()).strftime(date_format='%Y-%m-%d'))
 
     return fig, ax
+
+
+def profile_yos(fig, ax, da, yo_idx, colors, xlabel=None, ylabel=None, title=None, grid=None):
+    """
+    Plot profiles with the paired down-up profiles (yos) the same color
+    :param fig:
+    :param ax:
+    :param da:
+    :param segment_idx:
+    :param colors:
+    :param xlabel:
+    :param ylabel:
+    :param title:
+    :param grid:
+    :return:
+    """
+    xlabel = xlabel or None
+    ylabel = ylabel or 'Depth (m)'
+    title = title or None
+    grid = grid or False
+
+    # loop through each profile to plot each down-up segment with the same color
+    for i, ii in enumerate(yo_idx):  # each yo
+        c = colors[i]
+        for j, jj in enumerate(ii):  # each profile
+            try:
+                x = da.values[jj:ii[j + 1]]
+                y = da.depth.values[jj:ii[j + 1]]
+                xmask = ~np.isnan(x)  # get rid of nans so the lines are continuous
+                ax.plot(x[xmask], y[xmask], c=c)  # plot lines
+                ax.scatter(x[xmask], y[xmask], color=c, s=30, edgecolor='None')
+            except IndexError:
+                continue
+
+    ax.invert_yaxis()
+    ax.set_ylabel(ylabel)
+    if xlabel:
+        ax.set_xlabel(xlabel)
+
+    if title:
+        ax.set_title(title, fontsize=14)
+
+    if grid:
+        ax.grid(ls='--', lw=.5)
+
+
+def xsection(fig, ax, x, y, z, xlabel=None, ylabel=None, clabel=None, cmap=None, title=None, date_fmt=None,
+             grid=None):
+    xlabel = xlabel or 'Time'
+    ylabel = ylabel or 'Depth (m)'
+    clabel = clabel or None
+    cmap = cmap or 'jet'
+    title = title or None
+    date_fmt = date_fmt or None
+    grid = grid or False
+
+    xc = ax.scatter(x, y, c=z, cmap=cmap, s=10, edgecolor='None')
+
+    ax.invert_yaxis()
+    ax.set_ylabel(ylabel)
+    ax.set_xlabel(xlabel)
+
+    if title:
+        ax.set_title(title, fontsize=18)
+
+    # format colorbar
+    divider = make_axes_locatable(ax)
+    cax = divider.new_horizontal(size='5%', pad=0.1, axes_class=plt.Axes)
+    fig.add_axes(cax)
+    if clabel:
+        cb = plt.colorbar(xc, cax=cax, label=clabel)
+    else:
+        cb = plt.colorbar(xc, cax=cax)
+
+    # format x-axis
+    if date_fmt:
+        xfmt = mdates.DateFormatter(date_fmt)
+        ax.xaxis.set_major_formatter(xfmt)
+
+    if grid:
+        ax.grid(ls='--', lw=.5)

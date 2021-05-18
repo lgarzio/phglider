@@ -12,6 +12,7 @@ import numpy as np
 import PyCO2SYS as pyco2
 from erddapy import ERDDAP
 from sklearn.linear_model import LinearRegression
+import cmocean as cmo
 
 
 def calculate_ta(deployment, salinity):
@@ -45,15 +46,6 @@ def calculate_ta(deployment, salinity):
                           'sampling data taken during glider deployment and recovery.'
 
     return ta
-
-
-def glider_region(ds):
-    extent = [np.nanmin(ds.longitude.values) - 1.75, np.nanmax(ds.longitude.values) + 1.75,
-              np.nanmin(ds.latitude.values) - 1.5, np.nanmax(ds.latitude.values) + 1.5]
-    region = dict()
-    region['extent'] = extent
-
-    return region
 
 
 def find_calfile(deployment, sn):
@@ -103,16 +95,30 @@ def find_configs(deployment):
     return global_attributes, variable_attrs, instruments
 
 
-def get_erddap_dataset(server, ds_id, var_list=None):
+def get_erddap_dataset(server, ds_id, variables=None, constraints=None):
+    variables = variables or None
+    constraints = constraints or None
+
     e = ERDDAP(server=server,
                protocol='tabledap',
                response='nc')
     e.dataset_id = ds_id
-    if var_list:
-        e.variables = var_list
+    if constraints:
+        e.constraints = constraints
+    if variables:
+        e.variables = variables
     ds = e.to_xarray()
     ds = ds.sortby(ds.time)
     return ds
+
+
+def glider_region(ds):
+    extent = [np.nanmin(ds.longitude.values) - 1.75, np.nanmax(ds.longitude.values) + 1.75,
+              np.nanmin(ds.latitude.values) - 1.5, np.nanmax(ds.latitude.values) + 1.5]
+    region = dict()
+    region['extent'] = extent
+
+    return region
 
 
 def linear_regression(x, y):
@@ -131,6 +137,22 @@ def linear_regression(x, y):
     y_pred = model.predict(x)
 
     return r_squared, slope[0], intercept, y_pred
+
+
+def plot_vars():
+    plt_vars = {'conductivity': {'cmap': 'jet', 'ttl': 'Conductivity (S m-1)'},
+                'temperature': {'cmap': cmo.cm.thermal, 'ttl': 'Temperature ({})'.format(r'$\rm ^oC$')},
+                'salinity': {'cmap': cmo.cm.haline, 'ttl': 'Salinity'},
+                'chlorophyll_a': {'cmap': cmo.cm.algae, 'ttl': 'Chlorophyll ({}g/L)'.format(chr(956))},
+                'oxygen_concentration_mgL': {'cmap': cmo.cm.oxy, 'ttl': 'Oxygen (mg/L)'},
+                'oxygen_concentration': {'cmap': cmo.cm.oxy, 'ttl': 'Oxygen (umol/L)'},
+                'oxygen_concentration_shifted': {'cmap': cmo.cm.oxy, 'ttl': 'Oxygen (shifted) (umol/L)'},
+                'sbe41n_ph_ref_voltage': {'cmap': cmo.cm.matter, 'ttl': 'pH Reference Voltage'},
+                'sbe41n_ph_ref_voltage_shifted': {'cmap': cmo.cm.matter, 'ttl': 'pH Reference Voltage (shifted)'},
+                'ph_total': {'cmap': cmo.cm.matter, 'ttl': 'pH'},
+                'ph_total_shifted': {'cmap': cmo.cm.matter, 'ttl': 'pH (shifted)'}
+                }
+    return plt_vars
 
 
 def run_co2sys_ta_ph(ta, ph, sal, temp=25, press_dbar=0):
@@ -169,3 +191,79 @@ def run_co2sys_ta_ph(ta, ph, sal, temp=25, press_dbar=0):
     revelle = results['revelle_factor']
 
     return omega_arag, pco2, revelle
+
+
+def yos(ds):
+    """
+    Identify the down-up profile pairs (yo), profile times and indices
+    """
+    profiletimes, idx = np.unique(ds.profile_time.values, return_index=True)
+    depth = ds.depth.values
+
+    # calculate segments
+    idxs = []
+    yos = []
+    indices = []
+    directions = []
+    for i, ii in enumerate(idx):
+        if i > 0:
+            if ii < i_f:  # it's already been included in a previous profile
+                continue
+        if i < len(idx) - 1:
+            i_f = idx[i + 1]
+            # check the next profile time index. if the next profile contains <4 data points, include it in this profile
+            try:
+                i_f2 = idx[i + 2]
+                if i_f2 - i_f < 4:
+                    i_f = i_f2
+            except IndexError:
+                print('')
+        else:
+            i_f = len(depth)
+        while i_f < ii:
+            # skip if the profile indices are out of order, it looks like there are just a few profile times inserted
+            # in the wrong place for some rt datasets (e.g. ru30-20210503T1929)
+            print("Profile time indices aren't in ascending order {} {}".format(ii, ds.time.values[ii]))
+            i_f = idx[i + 2]
+            i += 1
+        y = depth[ii:i_f]
+        y = y[~np.isnan(y)]
+        if len(y) > 20:
+            y1 = np.nanmean(y[0:10])
+            y2 = np.nanmean(y[-10:])
+        else:
+            y1 = np.nanmean(y[0:3])
+            y2 = np.nanmean(y[-3:])
+        if y1 < y2:
+            dd = 'down'
+        else:
+            dd = 'up'
+        if len(directions) > 0:
+            if dd not in directions:
+                directions.append(dd)
+                indices.append(ii)
+                yos.append(directions)
+                idxs.append(indices)
+                indices = []
+                directions = []
+            else:
+                yos.append(directions)
+                idxs.append(indices)
+                indices = [ii]
+                directions = [dd]
+        else:
+            directions.append(dd)
+            indices.append(ii)
+            if dd == 'up':
+                yos.append(directions)
+                idxs.append(indices)
+                indices = []
+                directions = []
+
+    for i, idx in enumerate(idxs):
+        if i < len(idxs) - 1:
+            idx.append(idxs[i + 1][0])
+        else:
+            idx.append(len(ds.time))
+
+    return profiletimes, yos, idxs
