@@ -42,11 +42,13 @@ The toolbox should now be installed to your conda environment.
 
 4. [plot_time_shift.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/plot_time_shift.py): Evaluate the time shifts by plotting short time ranges (e.g. 3 hour) for pH and dissolved oxygen.
 
-5. [ta_sal_regression.py](https://github.com/lgarzio/phglider/blob/master/ta_equation/ta_sal_regression.py): Calculate the best fit TA-salinity linear regression when the discrete samples are analyzed.
+5. [plot_qc.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/plot_qc.py): Create cross-section and profile plots for short sections of glider data for the purposes of QC.
 
-6. [glider_proc_qc.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/glider_proc_qc.py): Calculate TA and CO2SYS variables, and run QARTOD QA/QC tests.
+6. [ta_sal_regression.py](https://github.com/lgarzio/phglider/blob/master/ta_equation/ta_sal_regression.py): Calculate the best fit TA-salinity linear regression when the discrete samples are analyzed.
 
-7. [glider_to_dac.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/glider_to_dac.py): Format dataset to upload to the [IOOS glider DAC](https://gliders.ioos.us/).
+7. [glider_proc_qc.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/glider_proc_qc.py): Calculate TA and CO2SYS variables, and run QARTOD QA/QC tests.
+
+8. [glider_to_dac.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/glider_to_dac.py): Format dataset to upload to the [IOOS glider DAC](https://gliders.ioos.us/).
 
 ## Citations
 Humphreys, M. P., Gregor, L., Pierrot, D., van Heuven, S. M. A. C., Lewis, E. R., and Wallace, D. W. R. (2020). [PyCO2SYS](https://pypi.org/project/PyCO2SYS/): marine carbonate system calculations in Python. Zenodo. doi:10.5281/zenodo.3744275.
