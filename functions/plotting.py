@@ -80,7 +80,7 @@ def glider_track(fig, ax, ds, region, bathy=None, landcolor=None, title=None, cu
     add_map_features(ax, extent, **margs)
 
     # plot full glider track
-    ax.scatter(ds.longitude.values, ds.latitude.values, color='white', marker='.', s=40, transform=ccrs.PlateCarree(),
+    ax.scatter(ds.longitude.values, ds.latitude.values, color='k', marker='.', s=60, transform=ccrs.PlateCarree(),
                zorder=10)
     sct = ax.scatter(ds.longitude.values, ds.latitude.values, c=ds.time.values, marker='.', s=15, cmap='rainbow',
                      transform=ccrs.PlateCarree(), zorder=10)
