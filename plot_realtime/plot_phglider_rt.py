@@ -31,9 +31,10 @@ def main(args):
     glider_vars = ['latitude', 'longitude', 'depth', 'conductivity', 'salinity', 'sci_water_pressure',
                    'temperature', 'sbe41n_ph_ref_voltage', 'oxygen_concentration', 'water_depth']
     if 'um_242' in deploy:
-        glider_vars.append('sci_flntu_chlor_units')
+        chlvar = 'sci_flntu_chlor_units'
     else:
-        glider_vars.append('chlorophyll_a')
+        chlvar = 'chlorophyll_a'
+    glider_vars.append(chlvar)
 
     gargs = dict()
     gargs['variables'] = glider_vars
