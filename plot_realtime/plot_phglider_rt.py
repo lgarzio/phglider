@@ -56,7 +56,7 @@ def main(args):
     vrs[vrs == 0.0] = np.nan  # convert zero values to nan
     oxy = (ds.oxygen_concentration.values * 32) / 1000  # change oxygen from umol/L to mg/L
     oxy[oxy == 0.0] = np.nan  # convert zero values to nan
-    chl = ds.chlorophyll_a.values
+    chl = ds[chlvar].values
     chl[chl == 0.0] = np.nan  # convert zero values to nan
 
     # calculate pH
