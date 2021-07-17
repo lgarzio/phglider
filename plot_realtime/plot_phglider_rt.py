@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 3/2/2021
-Last modified: 4/2/2021
+Last modified: 7/17/2021
 Plot realtime pH glider data variables: seawater temperature, salinity, chlorophyll, dissolved oxygen, pH reference
 voltage, and pH (not corrected for time lag)
 """
@@ -29,7 +29,11 @@ def main(args):
     print('\nPlotting {}'.format(deploy))
     glider_id = '{}-profile-sci-rt'.format(deploy)
     glider_vars = ['latitude', 'longitude', 'depth', 'conductivity', 'salinity', 'sci_water_pressure',
-                   'temperature', 'sbe41n_ph_ref_voltage', 'chlorophyll_a', 'oxygen_concentration', 'water_depth']
+                   'temperature', 'sbe41n_ph_ref_voltage', 'oxygen_concentration', 'water_depth']
+    if 'um_242' in deploy:
+        glider_vars.append('sci_flntu_chlor_units')
+    else:
+        glider_vars.append('chlorophyll_a')
 
     gargs = dict()
     gargs['variables'] = glider_vars
