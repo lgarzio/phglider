@@ -40,7 +40,7 @@ def main(args):
     tf = pd.to_datetime(np.nanmax(ds.time)).strftime('%Y-%m-%dT%H:%M')
     now = dt.datetime.now().strftime('%d-%b-%Y %H:%M')
 
-    title = f'{deploy.split("-")[0]} track: {t0} to {tf}\nUpdated: {now}'
+    title = f'{deploy.split("-")[0]} track: {t0} to {tf}\nUpdated: {now} EST'
 
     extent = glider_region['extent']
     bathy = xr.open_dataset(bathymetry)

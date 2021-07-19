@@ -117,7 +117,7 @@ def main(args):
     splitter = deploy.split('-')
     glider = splitter[0]
     deploy_date = dt.datetime.strptime(splitter[1].split('T')[0], '%Y%m%d')
-    main_ttl = '{}: deployed {} (updated {})'.format(glider, deploy_date.strftime('%d-%b-%Y'),
+    main_ttl = '{}: deployed {} (updated {} EST)'.format(glider, deploy_date.strftime('%d-%b-%Y'),
                                                      dt.datetime.now().strftime('%d-%b-%Y %H:%M'))
     fig.suptitle(main_ttl, fontsize=22, y=.96)
 
