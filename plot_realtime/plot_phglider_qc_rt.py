@@ -93,7 +93,7 @@ def main(args):
                 'ph': {'cmap': cmo.cm.matter, 'ttl': 'pH (uncorrected)'}
                 }
 
-    savedir_dt = os.path.join(savedir, deploy, 'rtqc_plots', t0_savestr)
+    savedir_dt = os.path.join(savedir, deploy, t0_savestr)
     os.makedirs(savedir_dt, exist_ok=True)
 
     # define the down-up profile pairs (yos), profile times and indices for profile plots
