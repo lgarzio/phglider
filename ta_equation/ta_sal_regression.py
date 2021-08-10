@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 4/6/2021
-Last modified: 4/14/2021
+Last modified: 8/10/2021
 Modified from MATLAB code written by Liza Wright-Fairbanks.
 Calculate the linear relationship between Total Alkalinity and salinity from in-situ water sampling data taken during
 glider deployment and recovery (for nearshore samples = lower salinity region) and historical ECOA water sampling data
@@ -30,10 +30,18 @@ def main(deploy, ecoa_discrete, glider_discrete, sDir):
     r_sq, m, b, y_predict = cf.linear_regression(discrete_sal, discrete_ta)
     equation = 'y = {}x + {}'.format(np.round(m, 2), np.round(b, 2))
 
+    source = np.unique(glider_df['source']).tolist()
+    if len(source) == 1:
+        glider_label = '{}'.format(source[0].upper())
+    elif len(source) == 2:
+        glider_label = '{}/{}'.format(source[0].upper(), source[1].upper())
+    elif len(source) == 3:
+        glider_label = '{}/{}/{}'.format(source[0].upper(), source[1].upper(), source[2].upper())
+
     # plot
     fig, ax = plt.subplots()
     ax.plot(ecoa_df.discrete_sal, ecoa_df.discrete_ta, 'r.', ms=5, label='ECOA')
-    ax.plot(glider_df.discrete_sal, glider_df.discrete_ta, 'b.', ms=5, label='RU')
+    ax.plot(glider_df.discrete_sal, glider_df.discrete_ta, 'b.', ms=5, label=glider_label)
     ax.plot(discrete_sal, y_predict, 'k-', label=equation)
     ax.text(np.nanmin(discrete_sal), np.nanmax(discrete_ta) * 0.97, 'R2: {}'.format(np.round(r_sq, 2)), fontsize=8)
     ax.set_xlabel('Salinity')
@@ -56,6 +64,6 @@ def main(deploy, ecoa_discrete, glider_discrete, sDir):
 if __name__ == '__main__':
     deployment = 'ru30-20210226T1647'
     ecoa_data = '/Users/garzio/Documents/repo/lgarzio/phglider/water_sampling/ECOA.csv'
-    glider_discrete_data = '/Users/garzio/Documents/repo/lgarzio/phglider/water_sampling/ru30-20210226T1647.csv'
+    glider_discrete_data = '/Users/garzio/Documents/repo/lgarzio/phglider/water_sampling/winter_water_sampling_nj.csv'
     save_dir = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/plots'
     main(deployment, ecoa_data, glider_discrete_data, save_dir)
