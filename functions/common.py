@@ -24,9 +24,9 @@ def calculate_ta(deployment, salinity):
     :return: data array of calculated Total Alkalinity
     """
     # find TA-salinity equation file calculates from ta_sal_regression.py
-    # tadir = '/Users/garzio/Documents/repo/lgarzio/phglider/ta_equation'
-    tadir = '/home/lgarzio/repo/lgarzio/phglider/ta_equation'  # in server
     tafiles = sorted(glob.glob(tadir + '/{}_ta_equation-test.txt'.format(deployment)))
+    tadir = '/Users/garzio/Documents/repo/lgarzio/phglider/ta_equation'
+    #tadir = '/home/lgarzio/repo/lgarzio/phglider/ta_equation'  # in server
     if len(tafiles) > 1:
         raise ValueError('More than 1 TA-salinity equation file found for deployment: {}'.format(deployment))
     elif len(tafiles) < 1:
@@ -57,8 +57,8 @@ def find_calfile(deployment, sn):
     :param sn: sensor serial number (e.g. 'sbe10344')
     :return: full file path to the most recent calibration file
     """
-    # caldir = '/Users/garzio/Documents/repo/lgarzio/phglider/calibration'
-    caldir = '/home/lgarzio/repo/lgarzio/phglider/calibration'  # in server
+    caldir = '/Users/garzio/Documents/repo/lgarzio/phglider/calibration'
+    #caldir = '/home/lgarzio/repo/lgarzio/phglider/calibration'  # in server
     calfiles = sorted(glob.glob(caldir + '/{}*.txt'.format(sn)))  # get all cal files for the serial number
     deploy_date = pd.to_datetime(deployment.split('-')[-1])
     if len(calfiles) > 1:
