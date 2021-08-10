@@ -54,11 +54,13 @@ def add_map_features(axis, extent, edgecolor=None, landcolor=None):
     gl.yformatter = LATITUDE_FORMATTER
 
 
-def glider_track(fig, ax, ds, region, bathy=None, landcolor=None, title=None, current_glider_loc=None):
+def glider_track(fig, ax, ds, region, bathy=None, landcolor=None, title=None, current_glider_loc=None,
+                 timevariable=None):
     bathy = bathy or None
     landcolor = landcolor or 'tan'
     title = title or None
     current_glider_loc = current_glider_loc or None
+    timevariable = timevariable or 'time'
 
     extent = region['extent']
 
@@ -80,12 +82,17 @@ def glider_track(fig, ax, ds, region, bathy=None, landcolor=None, title=None, cu
     add_map_features(ax, extent, **margs)
 
     # plot full glider track
-    ax.scatter(ds.longitude.values, ds.latitude.values, color='k', marker='.', s=60, transform=ccrs.PlateCarree(),
-               zorder=10)
-    sct = ax.scatter(ds.longitude.values, ds.latitude.values, c=ds.time.values, marker='.', s=15, cmap='rainbow',
-                     transform=ccrs.PlateCarree(), zorder=10)
+    try:
+        lon = ds.longitude.values
+        lat = ds.latitude.values
+    except AttributeError:
+        lon = ds.Longitude.values
+        lat = ds.Latitude.values
+    ax.scatter(lon, lat, color='k', marker='.', s=60, transform=ccrs.PlateCarree(), zorder=10)
+    sct = ax.scatter(lon, lat, c=ds[timevariable].values, marker='.', s=15, cmap='rainbow', transform=ccrs.PlateCarree(),
+                     zorder=10)
     if current_glider_loc:
-        ax.plot(ds.longitude.values[-1], ds.latitude.values[-1], color='white', marker='^', markeredgecolor='black',
+        ax.plot(lon[-1], lat[-1], color='white', marker='^', markeredgecolor='black',
                 markersize=8.5, transform=ccrs.PlateCarree())
 
     # Plot title
@@ -165,7 +172,7 @@ def xsection(fig, ax, x, y, z, xlabel=None, ylabel=None, clabel=None, cmap=None,
     ax.set_xlabel(xlabel)
 
     if title:
-        ax.set_title(title, fontsize=18)
+        ax.set_title(title, fontsize=16)
 
     # format colorbar
     divider = make_axes_locatable(ax)

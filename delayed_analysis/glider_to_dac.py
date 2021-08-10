@@ -98,6 +98,15 @@ def main(fname):
         ds[key] = np.nan
         ds[key].attrs = values
 
+    # rename variables so they match the previous versions that were sent to the DAC
+    rename_dict = {'unix_time': 'UnixTime', 'sci_water_pressure_dbar': 'Pressure', 'temperature': 'Temperature',
+                   'salinity': 'Salinity', 'chlorophyll_a': 'Chlorophyll', 'total_alkalinity': 'TotalAlkalinity',
+                   'saturation_aragonite': 'AragoniteSaturationState', 'latitude': 'Latitude',
+                   'longitude': 'Longitude', 'conductivity': 'Conductivity',
+                   'sbe41n_ph_ref_voltage': 'pHReferenceVoltage', 'ph_total': 'pH',
+                   'oxygen_concentration': 'Oxygen_molar', 'oxygen_concentration_mgL': 'Oxygen_mgL'}
+    ds = ds.rename(rename_dict)
+
     nc_filename = '{}/{}_to_dac.nc'.format(os.path.dirname(fname), deploy)
     ds.to_netcdf(nc_filename)
 

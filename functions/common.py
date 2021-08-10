@@ -24,9 +24,9 @@ def calculate_ta(deployment, salinity):
     :return: data array of calculated Total Alkalinity
     """
     # find TA-salinity equation file calculates from ta_sal_regression.py
-    tafiles = sorted(glob.glob(tadir + '/{}_ta_equation-test.txt'.format(deployment)))
     tadir = '/Users/garzio/Documents/repo/lgarzio/phglider/ta_equation'
     #tadir = '/home/lgarzio/repo/lgarzio/phglider/ta_equation'  # in server
+    tafiles = sorted(glob.glob(tadir + '/{}_ta_equation.txt'.format(deployment)))
     if len(tafiles) > 1:
         raise ValueError('More than 1 TA-salinity equation file found for deployment: {}'.format(deployment))
     elif len(tafiles) < 1:
@@ -113,8 +113,12 @@ def get_erddap_dataset(server, ds_id, variables=None, constraints=None):
 
 
 def glider_region(ds):
-    extent = [np.nanmin(ds.longitude.values) - 1.75, np.nanmax(ds.longitude.values) + 1.75,
-              np.nanmin(ds.latitude.values) - 1.5, np.nanmax(ds.latitude.values) + 1.5]
+    try:
+        extent = [np.nanmin(ds.longitude.values) - 1.75, np.nanmax(ds.longitude.values) + 1.75,
+                  np.nanmin(ds.latitude.values) - 1.5, np.nanmax(ds.latitude.values) + 1.5]
+    except AttributeError:
+        extent = [np.nanmin(ds.Longitude.values) - 1.75, np.nanmax(ds.Longitude.values) + 1.75,
+                  np.nanmin(ds.Latitude.values) - 1.5, np.nanmax(ds.Latitude.values) + 1.5]
     region = dict()
     region['extent'] = extent
 
@@ -151,6 +155,21 @@ def plot_vars():
                 'sbe41n_ph_ref_voltage_shifted': {'cmap': cmo.cm.matter, 'ttl': 'pH Reference Voltage (shifted)'},
                 'ph_total': {'cmap': cmo.cm.matter, 'ttl': 'pH'},
                 'ph_total_shifted': {'cmap': cmo.cm.matter, 'ttl': 'pH (shifted)'}
+                }
+    return plt_vars
+
+
+def plot_vars_dac():
+    plt_vars = {'Conductivity': {'cmap': 'jet', 'ttl': 'Conductivity (S m-1)'},
+                'Temperature': {'cmap': cmo.cm.thermal, 'ttl': 'Temperature ({})'.format(r'$\rm ^oC$')},
+                'Salinity': {'cmap': cmo.cm.haline, 'ttl': 'Salinity'},
+                'Chlorophyll': {'cmap': cmo.cm.algae, 'ttl': 'Chlorophyll ({}g/L)'.format(chr(956))},
+                'Oxygen_mgL': {'cmap': cmo.cm.oxy, 'ttl': 'Oxygen (mg/L)'},
+                'Oxygen_molar': {'cmap': cmo.cm.oxy, 'ttl': 'Oxygen (umol/L)'},
+                'pHReferenceVoltage': {'cmap': cmo.cm.matter, 'ttl': 'pH Reference Voltage'},
+                'pH': {'cmap': cmo.cm.matter, 'ttl': 'pH'},
+                'TotalAlkalinity': {'cmap': cmo.cm.matter, 'ttl': 'Total Alkalinity'},
+                'AragoniteSaturationState': {'cmap': cmo.cm.matter, 'ttl': 'Aragonite Saturation State'}
                 }
     return plt_vars
 
