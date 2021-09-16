@@ -12,5 +12,6 @@ dependencies:
   - numpy==1.20.1
   - xarray==0.17.0
   - scikit-learn==0.24.1
+  - geographiclib=1.52
   - pip:
     - pyco2sys==1.6.0
