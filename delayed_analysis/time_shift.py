@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 4/2/2021
-Last modified: 4/3/2021
+Last modified: 8/15/2021
 Apply a best time shift for pH and oxygen glider data. Before a shift is applied, the dataset is recalculated to
 one second averages. The time shifted data are added back to the dataset which is saved as a new netCDF file.
 """
@@ -24,12 +24,14 @@ def main(sensor_sn, shifts, fname):
     ds = ds.swap_dims({'obs': 'time'})
     ds = ds.sortby(ds.time)
 
+    # convert pH voltages of 0.0 to nan
+    ds['sbe41n_ph_ref_voltage'][ds['sbe41n_ph_ref_voltage'] == 0.0] = np.nan
+
     # read cal file
     calfile = cf.find_calfile(deploy, sensor_sn)
     with open(calfile) as json_file:
         cc = json.load(json_file)
 
-    # drop timestamps with missing data
     df = ds.to_dataframe()
 
     # convert profile_time to seconds since 1970-01-01 so you don't lose the column in resampling
@@ -55,7 +57,9 @@ def main(sensor_sn, shifts, fname):
             df = df.merge(da, how='left', left_index=True, right_index=True)
             col_subset.append('{}_shifted'.format(varname))
 
+    # drop timestamps with duplicated and missing data
     df = df.dropna(axis=0, how='all', subset=col_subset)
+    df.drop_duplicates(inplace=True)
 
     # calculate pressure_dbar and drop any rows where pressure is <1 dbar
     df['sci_water_pressure_dbar'] = df['sci_water_pressure'] * 10
@@ -110,24 +114,17 @@ def main(sensor_sn, shifts, fname):
             if varname == 'f_p':
                 ds_shifted[varname].attrs['observation_type'] = 'calculated'
                 ds_shifted[varname].attrs['comment'] = 'Polynomial evaluation of sensor pressure response polynomial coefficients (f6-f1) and pressure_dbar'
-                ds_shifted[varname].attrs['f6'] = cc['f6']
-                ds_shifted[varname].attrs['f5'] = cc['f5']
-                ds_shifted[varname].attrs['f4'] = cc['f4']
-                ds_shifted[varname].attrs['f3'] = cc['f3']
-                ds_shifted[varname].attrs['f2'] = cc['f2']
-                ds_shifted[varname].attrs['f1'] = cc['f1']
+                ds_shifted[varname].attrs['calibration'] = str(cc)
                 ds_shifted[varname].attrs['units'] = '1'
             if varname == 'ph_total':
                 ds_shifted[varname].attrs['observation_type'] = 'calculated'
                 ds_shifted[varname].attrs['units'] = '1'
-                ds_shifted[varname].attrs['k0'] = cc['k0']
-                ds_shifted[varname].attrs['k2'] = cc['k2']
+                ds_shifted[varname].attrs['calibration'] = str(cc)
                 ds_shifted[varname].attrs['comment'] = 'calculated from instrument calibration coefficents, pressure, salinity, temperature, and measured reference voltage'
             if varname == 'ph_total_shifted':
                 ds_shifted[varname].attrs['observation_type'] = 'calculated'
                 ds_shifted[varname].attrs['units'] = '1'
-                ds_shifted[varname].attrs['k0'] = cc['k0']
-                ds_shifted[varname].attrs['k2'] = cc['k2']
+                ds_shifted[varname].attrs['calibration'] = str(cc)
                 if np.sum(~np.isnan(ds_shifted[varname].values)) > 0:
                     com = 'calculated from instrument calibration coefficents, pressure, salinity, temperature, and ' \
                           'measured reference voltage (shifted -{} seconds).'.format(sensor_shifts['ph'])
@@ -146,7 +143,7 @@ def main(sensor_sn, shifts, fname):
 
 
 if __name__ == '__main__':
-    ph_sn = 'sbe10344'
-    sensor_shifts = {'ph': 31, 'oxygen': 36}  # sensor_shifts = {'ph': 31, 'oxygen': 36}
-    ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/ru30-20210226T1647-profile-sci-delayed.nc'
+    ph_sn = 'sbeC18'  # 'sbeC18' 'sbe10344'
+    sensor_shifts = {'ph': 23, 'oxygen': 0}  # sensor_shifts = {'ph': 31, 'oxygen': 36}
+    ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210716T1804/delayed/ru30-20210716T1804-profile-sci-delayed.nc'
     main(ph_sn, sensor_shifts, ncfile)
