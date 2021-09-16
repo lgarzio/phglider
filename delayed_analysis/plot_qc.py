@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 5/13/2021
-Last modified: 8/10/2021
+Last modified: 9/16/2021
 Plot delayed-mode pH glider data variables for the purposes of QC: seawater conductivity, temperature, salinity,
 chlorophyll, dissolved oxygen, pH reference voltage, and pH
 """
