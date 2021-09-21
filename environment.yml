@@ -14,4 +14,5 @@ dependencies:
   - scikit-learn==0.24.1
   - geographiclib=1.52
   - pip:
-    - pyco2sys==1.6.0
+    - pyco2sys==1.7.1
+    - seawater==3.3.4

@@ -13,6 +13,8 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import os
+import seawater as sw
+import PyCO2SYS as pyco2
 import matplotlib.pyplot as plt
 plt.rcParams.update({'font.size': 12})
 
@@ -23,7 +25,7 @@ def main(fname):
     df = pd.read_csv(discrete_samples)
 
     # drop rows without pH values
-    df = df.dropna(axis=0, how='all', subset=['AveragepH'])
+    df = df.dropna(axis=0, how='all', subset=['AveragepH_25degC'])
 
     # create date times
     df['date_time'] = df['date'] + 'T' + df['gmt_time']
@@ -32,6 +34,32 @@ def main(fname):
     # convert lat/lon to decimal degrees  (negative longitude because these are degrees W)
     df['lat_decimal'] = df['lat'].map(lambda x: float(str(x).split(' ')[-1])/60 + float(str(x).split(' ')[0]))
     df['lon_decimal'] = df['lon'].map(lambda x: -(float(str(x).split(' ')[-1]) / 60 + float(str(x).split(' ')[0])))
+
+    # calculate pressure from depth
+    df['pressure_dbar'] = sw.pres(df['depth_m'], df['lat_decimal'])
+
+    # calculate pH corrected for temperature pressure salinity
+    # pyCO2SYS needs two parameters to calculate pH corrected, so if AverageTA isn't available, fill with 2200
+    df['AverageTA'] = df['AverageTA'].fillna(2200)
+    par1 = df['AveragepH_25degC']
+    par1_type = 3  # parameter type (pH)
+    par2 = df['AverageTA']
+    par2_type = 1
+
+    kwargs = dict(salinity=df['sal'],
+                  temperature=25,
+                  temperature_out=df['temp_c'],
+                  pressure=0,
+                  pressure_out=df['pressure_dbar'],
+                  opt_pH_scale=1,
+                  opt_k_carbonic=4,
+                  opt_k_bisulfate=1,
+                  opt_total_borate=1,
+                  opt_k_fluoride=2)
+
+
+    results = pyco2.sys(par1, par2, par1_type, par2_type, **kwargs)
+    df['ph_corrected'] = results['pH_out']
 
     ds = xr.open_dataset(fname)
     ds = ds.sortby(ds.time)
@@ -79,8 +107,7 @@ def main(fname):
                     # get the discrete water sample data
                     sample_depth = df_drt['depth_m']
                     if pv == 'ph':
-                        sample = df_drt['AveragepH']
-                        sample_std = df_drt['pH_Stdev']
+                        sample = df_drt['ph_corrected']
                     elif pv == 'salinity':
                         sample = df_drt['sal']
                     elif pv == 'temperature':
@@ -99,12 +126,8 @@ def main(fname):
                         ax.scatter(glider_data, glider_data.depth, c=colors[i], label=variable)
 
                     # plot water sample data
-                    if pv == 'ph:':
-                        ax.errorbar(sample.astype(float), sample_depth.astype(float), xerr=sample_std.astype(float),
-                                    c='tab:red', ecolor='k', ms=70, fmt='o', label='water samples')
-                    else:
-                        ax.scatter(sample.astype(float), sample_depth.astype(float), c='tab:red', ec='k', s=70,
-                                   label='water samples')
+                    ax.scatter(sample.astype(float), sample_depth.astype(float), c='tab:red', ec='k', s=70,
+                               label='water samples')
 
                     ax.legend()
                     if pv == 'ph':
