@@ -60,6 +60,7 @@ def find_calfile(deployment, sn):
     :return: full file path to the most recent calibration file
     """
     caldir = os.path.join(Path().absolute().parent, 'calibration')
+    print(caldir)
     #caldir = '/Users/garzio/Documents/repo/lgarzio/phglider/calibration'
     #caldir = '/home/lgarzio/repo/lgarzio/phglider/calibration'  # in server
     calfiles = sorted(glob.glob(caldir + '/{}*.txt'.format(sn)))  # get all cal files for the serial number
