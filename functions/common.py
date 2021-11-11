@@ -2,8 +2,10 @@
 
 """
 Author: Lori Garzio on 3/8/2021
-Last modified: 4/14/2021
+Last modified: 11/11/2021
 """
+from pathlib import Path
+import os
 import datetime as dt
 import glob
 import json
@@ -57,7 +59,8 @@ def find_calfile(deployment, sn):
     :param sn: sensor serial number (e.g. 'sbe10344')
     :return: full file path to the most recent calibration file
     """
-    caldir = '/Users/garzio/Documents/repo/lgarzio/phglider/calibration'
+    caldir = os.path.join(Path().absolute().parent, 'calibration')
+    #caldir = '/Users/garzio/Documents/repo/lgarzio/phglider/calibration'
     #caldir = '/home/lgarzio/repo/lgarzio/phglider/calibration'  # in server
     calfiles = sorted(glob.glob(caldir + '/{}*.txt'.format(sn)))  # get all cal files for the serial number
     deploy_date = pd.to_datetime(deployment.split('-')[-1])
@@ -86,8 +89,9 @@ def find_calfile(deployment, sn):
 
 
 def find_configs(deployment):
+    configdir = os.path.join(Path().absolute().parent, 'config')
     # configdir = '/Users/garzio/Documents/repo/lgarzio/phglider/config'
-    configdir = '/home/lgarzio/repo/lgarzio/phglider/config'  # in server
+    # configdir = '/home/lgarzio/repo/lgarzio/phglider/config'  # in server
     global_attributes = '{}/{}/global_attributes.json'.format(configdir, deployment)
     variable_attrs = '{}/variable_attrs.json'.format(configdir)
     instruments = '{}/{}/instruments.json'.format(configdir, deployment)
