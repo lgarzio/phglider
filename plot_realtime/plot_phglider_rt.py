@@ -48,17 +48,18 @@ def main(args):
     with open(calfile) as json_file:
         cc = json.load(json_file)
 
+    for v in ['conductivity', 'temperature', 'sbe41n_ph_ref_voltage', 'oxygen_concentration', 'salinity', chlvar]:
+        ds[v][ds[v] == 0.0] = np.nan  # convert zeros to nan
+        ds[v][ds[v] > 1000] = np.nan  # convert really high values to nan
+
     tm = ds.time.values
     depth = ds.depth.values
     pressure_dbar = ds.sci_water_pressure.values * 10
     temp = ds.temperature.values
     sal = ds.salinity.values
     vrs = ds.sbe41n_ph_ref_voltage.values
-    vrs[vrs == 0.0] = np.nan  # convert zero values to nan
     oxy = (ds.oxygen_concentration.values * 32) / 1000  # change oxygen from umol/L to mg/L
-    oxy[oxy == 0.0] = np.nan  # convert zero values to nan
     chl = ds[chlvar].values
-    chl[chl == 0.0] = np.nan  # convert zero values to nan
 
     # calculate pH
     ph = np.array([])
