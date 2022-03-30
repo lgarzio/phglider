@@ -13,6 +13,7 @@ dependencies:
   - xarray==0.17.0
   - scikit-learn==0.24.1
   - geographiclib=1.52
+  - ioos_qc=2.0.1
   - pip:
     - pyco2sys==1.7.1
     - seawater==3.3.4
