@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 3/8/2021
-Last modified: 11/11/2021
+Last modified: 3/30/2022
 """
 import datetime as dt
 import glob
@@ -13,6 +13,64 @@ import PyCO2SYS as pyco2
 from erddapy import ERDDAP
 from sklearn.linear_model import LinearRegression
 import cmocean as cmo
+
+
+def attribute_mapping(varname):
+    """
+    Map new variable to old for attribute assignment
+    :param varname: variable name
+    :return: variable name from original dataset to use for attributes with additional relevant attributes
+    """
+    variable_mapping = dict(
+        pressure_interpolated=dict(
+            comment='linear interpolated pressure',
+            ancillary_variables='pressure'
+        ),
+        temperature_interpolated=dict(
+            comment='linear interpolated temperature',
+            ancillary_variables='temperature'
+        ),
+        salinity_interpolated=dict(
+            comment='linear interpolated salinity',
+            ancillary_variables='salinity'
+        )
+    )
+
+    return variable_mapping[varname]
+
+
+def assign_ph_attrs(varname):
+    """
+    Assign attributes for pH variables
+    :param varname: variable name
+    :return: attributes for pH variables
+    """
+    ph_attributes = dict(
+        f_p=dict(
+            observation_type='calculated',
+            comment='Polynomial evaluation of sensor pressure response polynomial coefficients (f6-f1) and pressure',
+            ancillary_variables='pressure_interpolated, polynomial_coefficients',
+            units='1'
+        ),
+        ph_total=dict(
+            observation_type='calculated',
+            comment='Calculated from instrument calibration coefficents, interpolated pressure, salinity, temperature, '
+                    'and measured reference voltage',
+            ancillary_variables='sbe41n_ph_ref_voltage pressure_interpolated temperature_interpolated '
+                                'salinity_interpolated f_p k0 k2',
+            units='1'
+        ),
+        ph_total_shifted=dict(
+            observation_type='calculated',
+            comment='Calculated from instrument calibration coefficents, interpolated pressure, salinity, temperature, '
+                    'and measured reference voltage shifted by values defined in sbe41n_ph_ref_voltage_optimal_shift',
+            ancillary_variables='sbe41n_ph_ref_voltage_shifted pressure_interpolated temperature_interpolated '
+                                'salinity_interpolated f_p k0 k2',
+            units='1'
+        )
+    )
+
+    return ph_attributes[varname]
 
 
 def calculate_ta(deployment, salinity):
@@ -42,8 +100,11 @@ def calculate_ta(deployment, salinity):
     ta.attrs['long_name'] = 'Total Alkalinity'
     ta.attrs['ancillary_variables'] = 'salinity'
     ta.attrs['observation_type'] = 'calculated'
-    ta.attrs['comment'] = 'Calculated from salinity using a linear relationship determined from in-situ water ' \
-                          'sampling data taken during glider deployment and recovery.'
+    ta.attrs['comment'] = 'Calculated from salinity using the linear relationship (TA = {} * salinity + {}) ' \
+                          'determined from in-situ water sampling data taken during glider deployment and ' \
+                          'recovery in addition to ship-based water samples as described in Saba ' \
+                          'et al 2019 https://doi.org/10.3389/fmars.2019.00664'.format(np.round(ta_equ['m'], 2),
+                                                                                       np.round(ta_equ['b'], 2))
 
     return ta
 
@@ -57,8 +118,8 @@ def find_calfile(deployment, sn):
     :param sn: sensor serial number (e.g. 'sbe10344')
     :return: full file path to the most recent calibration file
     """
-    # caldir = '/Users/garzio/Documents/repo/lgarzio/phglider/calibration'
-    caldir = '/home/lgarzio/repo/lgarzio/phglider/calibration'  # in server
+    caldir = '/Users/garzio/Documents/repo/lgarzio/phglider/calibration'
+    #caldir = '/home/lgarzio/repo/lgarzio/phglider/calibration'  # in server
     calfiles = sorted(glob.glob(caldir + '/{}*.txt'.format(sn)))  # get all cal files for the serial number
     deploy_date = pd.to_datetime(deployment.split('-')[-1])
     if len(calfiles) > 1:
@@ -147,6 +208,7 @@ def plot_vars():
     plt_vars = {'conductivity': {'cmap': 'jet', 'ttl': 'Conductivity (S m-1)'},
                 'temperature': {'cmap': cmo.cm.thermal, 'ttl': 'Temperature ({})'.format(r'$\rm ^oC$')},
                 'salinity': {'cmap': cmo.cm.haline, 'ttl': 'Salinity'},
+                'density': {'cmap': cmo.cm.dense, 'ttl': 'Density (kg m-3)'},
                 'chlorophyll_a': {'cmap': cmo.cm.algae, 'ttl': 'Chlorophyll ({}g/L)'.format(chr(956))},
                 'oxygen_concentration_mgL': {'cmap': cmo.cm.oxy, 'ttl': 'Oxygen (mg/L)'},
                 'oxygen_concentration': {'cmap': cmo.cm.oxy, 'ttl': 'Oxygen (umol/L)'},
@@ -156,6 +218,9 @@ def plot_vars():
                 'ph_total': {'cmap': cmo.cm.matter, 'ttl': 'pH'},
                 'ph_total_shifted': {'cmap': cmo.cm.matter, 'ttl': 'pH (shifted)'}
                 }
+    # plt_vars = {'ph_total': {'cmap': cmo.cm.matter, 'ttl': 'pH'},
+    #             'ph_total_shifted': {'cmap': cmo.cm.matter, 'ttl': 'pH (shifted)'}
+    #             }
     return plt_vars
 
 
