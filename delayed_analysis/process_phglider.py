@@ -253,10 +253,22 @@ def main(coord_lims, grconfig, fname):
                           attrs=attrs)
         phds[qc_varname] = da
 
-        # Apply the QC flags to the data
+        # Make a copy of the data and apply the QC flags
+        original_da = phds[sensor].copy()
+        if not hasattr(original_da, 'comment'):
+            original_da.attrs['comment'] = 'No QC applied'
+        else:
+            original_da.attrs['comment'] = '. '.join((original_da.comment, 'No QC applied'))
+        new_name = f'{original_da.name}_noqc'
+        phds[new_name] = original_da
+
         qc_idx = np.where(np.logical_or(flag_results == 3, flag_results == 4))[0]
         if len(qc_idx) > 0:
             phds[sensor][qc_idx] = np.nan
+        if not hasattr(phds[sensor], 'comment'):
+            phds[sensor].attrs['comment'] = f'{len(qc_idx)} {test} flags applied'
+        else:
+            phds[sensor].attrs['comment'] = '. '.join((phds[sensor].comment, f'{len(qc_idx)} {test} flags applied'))
 
     # QARTOD Spike Test
     ph_thresholds = {'suspect': 0.05, 'fail': 0.2, 'seconds': 30}  # 0.05 is the detection limit of the sensor
@@ -267,11 +279,15 @@ def main(coord_lims, grconfig, fname):
     phds[da.name] = da
 
     # apply spike test flags
-    for qv in ['ph_total_qartod_spike_test', 'ph_total_qartod_spike_test']:
+    for qv in ['ph_total_qartod_spike_test', 'ph_total_shifted_qartod_spike_test']:
         target_var = qv.split('_qartod_spike_test')[0]
         qc_idx = np.where(np.logical_or(phds[qv].values == 3, phds[qv].values == 4))[0]
         if len(qc_idx) > 0:
             phds[target_var][qc_idx] = np.nan
+        if not hasattr(phds[target_var], 'comment'):
+            phds[target_var].attrs['comment'] = f'{len(qc_idx)} spike_test flags applied'
+        else:
+            phds[target_var].attrs['comment'] = '. '.join((phds[target_var].comment, f'{len(qc_idx)} spike_test flags applied'))
 
     # Rate of Change Test - TODO
 
