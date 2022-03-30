@@ -36,7 +36,7 @@ The toolbox should now be installed to your conda environment.
 ## Delayed Mode Glider Data Processing Steps
 1. [download_ds.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/download_ds.py): Download the delayed-mode dataset to your local machine from the [RUCOOL ERDDAP](http://slocum-data.marine.rutgers.edu/erddap/index.html) server.
 
-2. [ta_sal_regression.py](https://github.com/lgarzio/phglider/blob/master/ta_equation/ta_sal_regression.py): Calculate the best fit TA-salinity linear regression when the discrete samples are analyzed.
+2. [ta_sal_regression.py](https://github.com/lgarzio/phglider/blob/master/ta_equation/ta_sal_regression.py): Calculate the best fit TA-salinity linear regression from discrete samples.
 
 3. [process_phglider.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/process_phglider.py): Process delayed-mode pH glider data.
    1. Apply QARTOD QC flags to CTD data.
