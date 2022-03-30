@@ -43,8 +43,9 @@ def plot_scatter(figure, axis, x, y, color, plt_ttl, cmin=None, cmax=None):
 
 def main(fname, plt_interval):
     ds = xr.open_dataset(fname)
-    plotting_vars = [['ph_total', 'ph_total_shifted'],
-                     ['oxygen_concentration', 'oxygen_concentration_shifted']]
+    # plotting_vars = [['ph_total', 'ph_total_shifted'],
+    #                  ['oxygen_concentration', 'oxygen_concentration_shifted']]
+    plotting_vars = [['ph_total', 'ph_total_shifted']]
 
     for pv in plotting_vars:
         for p in pv:
@@ -78,6 +79,6 @@ def main(fname, plt_interval):
 
 
 if __name__ == '__main__':
-    ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/ru30-20210226T1647-profile-sci-delayed_shifted.nc'
+    ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/um_242-20210630T1916/delayed/um_242-20210630T1916-profile-sci-delayed_shifted.nc'
     plot_interval = '3H'  # 3 hours
     main(ncfile, plot_interval)
