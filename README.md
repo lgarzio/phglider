@@ -57,9 +57,11 @@ The toolbox should now be installed to your conda environment.
 
 5. [plot_phvars.py](https://github.com/lgarzio/phglider/blob/master/plotting/plot_phvars.py): Plot short sections of data for pH variables for QC.
 
-6. Create [configuration files](https://github.com/lgarzio/phglider/tree/master/config) for the deployment.
+6. [compare_glider_discrete.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/compare_glider_discrete.py): Compare glider data to discrete water samples collected during glider deployment and recovery.
 
-7. [glider_to_dac.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/glider_to_dac.py): Format dataset to upload to the [IOOS glider DAC](https://gliders.ioos.us/).
+7. Create [configuration files](https://github.com/lgarzio/phglider/tree/master/config) for the deployment.
+
+8. [glider_to_dac.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/glider_to_dac.py): Format dataset to upload to the [IOOS glider DAC](https://gliders.ioos.us/).
 
 ## Citations
 Humphreys, M. P., Gregor, L., Pierrot, D., van Heuven, S. M. A. C., Lewis, E. R., and Wallace, D. W. R. (2020). [PyCO2SYS](https://pypi.org/project/PyCO2SYS/): marine carbonate system calculations in Python. Zenodo. doi:10.5281/zenodo.3744275.
