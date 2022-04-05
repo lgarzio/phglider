@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 9/16/2021
-Last modified: 9/16/2021
+Last modified: 4/5/2022
 Compare glider data to discrete water samples collected during glider deployment/recovery
 """
 
@@ -17,15 +17,20 @@ import seawater as sw
 import PyCO2SYS as pyco2
 import matplotlib.pyplot as plt
 plt.rcParams.update({'font.size': 12})
+pd.set_option('display.width', 320, "display.max_columns", 15)  # for display in pycharm console
 
 
 def main(fname):
+    save_dir = os.path.join(os.path.dirname(fname), 'compare_glider_discrete')
+    os.makedirs(save_dir, exist_ok=True)
+
     basedir = Path().absolute().parent
     discrete_samples = os.path.join(basedir, 'water_sampling', 'NOAA_OA_pH_discrete_samples.csv')
     df = pd.read_csv(discrete_samples)
 
-    # drop rows without pH values
+    # drop rows without pH values or lat/lon
     df = df.dropna(axis=0, how='all', subset=['AveragepH_25degC'])
+    df = df.dropna(axis=0, how='all', subset=['lat', 'lon'])
 
     # create date times
     df['date_time'] = df['date'] + 'T' + df['gmt_time']
@@ -64,7 +69,8 @@ def main(fname):
     ds = xr.open_dataset(fname)
     ds = ds.sortby(ds.time)
     ds = ds.swap_dims({'time': 'profile_lat'})
-    deploy = ds.deployment_name
+    filename = fname.split('/')[-1]
+    deploy = f'{filename.split("-")[0]}-{filename.split("-")[1]}'
     df2 = df.loc[df['deployment'] == deploy]
 
     plt_vars = ['ph', 'salinity', 'temperature']
@@ -105,7 +111,7 @@ def main(fname):
 
                 for pv in plt_vars:
                     # get the discrete water sample data
-                    sample_depth = df_drt['depth_m']
+                    sample_pressure = df_drt['pressure_dbar']
                     if pv == 'ph':
                         sample = df_drt['ph_corrected']
                     elif pv == 'salinity':
@@ -123,10 +129,10 @@ def main(fname):
                     colors = ['tab:blue', 'tab:green']
                     for i, variable in enumerate(glider_vars):
                         glider_data = dss[variable]
-                        ax.scatter(glider_data, glider_data.depth, c=colors[i], label=variable)
+                        ax.scatter(glider_data, dss.pressure_interpolated, c=colors[i], label=f'glider {variable}')
 
                     # plot water sample data
-                    ax.scatter(sample.astype(float), sample_depth.astype(float), c='tab:red', ec='k', s=70,
+                    ax.scatter(sample.astype(float), sample_pressure.astype(float), c='tab:red', ec='k', s=70,
                                label='water samples')
 
                     ax.legend()
@@ -141,14 +147,14 @@ def main(fname):
                         xlab = 'Temperature (degrees C)'
 
                     plt.ylim(0, 16)
-                    plt.xlim(xlims)
+                    #plt.xlim(xlims)
                     ax.set_xlabel(xlab)
                     ax.invert_yaxis()
-                    ax.set_ylabel('Depth (m)')
+                    ax.set_ylabel('Pressure (dbar)')
                     ax.set_title(f'Glider {dr.capitalize()}\n{sample_meta}\n{glider_meta}\n{diff_meta}')
 
-                    sfilename = f'{deploy}_discrete_comparison_{st_save_str}_{pv}.png'
-                    sfile = os.path.join(os.path.dirname(fname), 'compare_glider_discrete', sfilename)
+                    sfilename = f'{deploy}_discrete_comparison_{dr}_{st_save_str}_{pv}.png'
+                    sfile = os.path.join(save_dir, sfilename)
                     plt.savefig(sfile, dpi=300)
                     plt.close()
 
@@ -157,5 +163,5 @@ def main(fname):
 
 
 if __name__ == '__main__':
-    ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210716T1804/delayed/ru30-20210716T1804-profile-sci-delayed_shifted.nc'
+    ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/ru30-20210226T1647-profile-sci-delayed_qc.nc'
     main(ncfile)
