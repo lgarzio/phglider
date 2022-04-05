@@ -52,11 +52,13 @@ The toolbox should now be installed to your conda environment.
    11. Calculate CO2SYS variables using TA, corrected pH, interpolated salinity, interpolated temperature, interpolated pressure.
    12. Convert oxygen concentration to mg/L.
 
-4. [plot_qc.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/plot_qc.py): Create cross-section and profile plots for short sections of glider data for the purposes of QC.
+4. [plot_grouped_profiles_ph_qc.py](https://github.com/lgarzio/phglider/blob/master/plotting/plot_grouped_profiles_ph_qc.py): Plot corrected pH profiles with QARTOD gross range and spike tests applied.
 
-5. Create [configuration files](https://github.com/lgarzio/phglider/tree/master/config) for the deployment.
+5. [plot_phvars.py](https://github.com/lgarzio/phglider/blob/master/plotting/plot_phvars.py): Plot short sections of data for pH variables for QC.
 
-6. [glider_to_dac.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/glider_to_dac.py): Format dataset to upload to the [IOOS glider DAC](https://gliders.ioos.us/).
+6. Create [configuration files](https://github.com/lgarzio/phglider/tree/master/config) for the deployment.
+
+7. [glider_to_dac.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/glider_to_dac.py): Format dataset to upload to the [IOOS glider DAC](https://gliders.ioos.us/).
 
 ## Citations
 Humphreys, M. P., Gregor, L., Pierrot, D., van Heuven, S. M. A. C., Lewis, E. R., and Wallace, D. W. R. (2020). [PyCO2SYS](https://pypi.org/project/PyCO2SYS/): marine carbonate system calculations in Python. Zenodo. doi:10.5281/zenodo.3744275.
