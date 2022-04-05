@@ -11,16 +11,17 @@ salinity and density).
 4. Convert pH voltages of 0.0 to nan.
 5. Interpolate (method=linear) pressure and remove data where pressure <1 dbar.
 6. Interpolate (method=linear) temperature and salinity.
-7. Calculate pH from original and corrected voltages and interpolated CTD data.
-8. Calculate Total Alkalinity from interpolated salinity using a linear relationship determined from in-situ water
+7. Remove interpolated data for profiles that failed hysteresis tests.
+8. Calculate pH from original and corrected voltages and interpolated CTD data.
+9. Calculate Total Alkalinity from interpolated salinity using a linear relationship determined from in-situ water
 sampling.
-9. Run ioos_qc gross range test on additional variables defined in the gross_range.yml config file (e.g. calculated pH,
+10. Run ioos_qc gross range test on additional variables defined in the gross_range.yml config file (e.g. calculated pH,
 chlorophyll-a) and apply test results to data.
-10. Run QARTOD spike test on pH and corrected pH, and apply test results to data.
-11. TODO Run QARTOD rate of change test on pH and corrected pH (not implemented)
-12. Calculate CO2SYS variables using TA, corrected pH, interpolated salinity, interpolated temperature, interpolated
+11. Run QARTOD spike test on pH and corrected pH, and apply test results to data.
+12. TODO Run QARTOD rate of change test on pH and corrected pH (not implemented)
+13. Calculate CO2SYS variables using TA, corrected pH, interpolated salinity, interpolated temperature, interpolated
 pressure.
-13. Convert oxygen concentration to mg/L.
+14. Convert oxygen concentration to mg/L.
 """
 
 import os
@@ -160,9 +161,20 @@ def main(coord_lims, grconfig, fname):
     # drop duplicated timestamps
     df = df[~df.index.duplicated(keep='first')]
 
-    # interpolate other variables needed to calculate pH
-    df['temperature_interpolated'] = df['temperature'].interpolate(method='linear', limit_direction='both')
-    df['salinity_interpolated'] = df['salinity'].interpolate(method='linear', limit_direction='both')
+    # interpolate pressure again, this time limiting the amount of interpolation
+    df['pressure_interpolated'] = df['pressure'].interpolate(method='linear', limit_direction='both', limit=2)
+
+    # interpolate temperature and salinity (needed to calculate pH)
+    df['temperature_interpolated'] = df['temperature'].interpolate(method='linear', limit_direction='both', limit=2)
+    df['salinity_interpolated'] = df['salinity'].interpolate(method='linear', limit_direction='both', limit=2)
+
+    # if entire profiles were removed due to the CTD hysteresis tests, make sure the interpolated values are nan
+    hysteresis_tests = ['conductivity_hysteresis_test', 'temperature_hysteresis_test']
+    interp_cols = ['temperature_interpolated', 'salinity_interpolated']
+    for ht in hysteresis_tests:
+        ht_fail = np.logical_or(df[ht] == 3, df[ht] == 4)
+        for col in interp_cols:
+            df.loc[ht_fail, col] = np.nan
 
     # remove data where the pressure QARTOD QC flag value = 4/FAIL
     df = df[df.pressure_qartod_summary_flag != 4]
