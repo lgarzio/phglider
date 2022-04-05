@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 4/6/2021
-Last modified: 8/10/2021
+Last modified: 4/5/2022
 Modified from MATLAB code written by Liza Wright-Fairbanks.
 Calculate the linear relationship between Total Alkalinity and salinity from in-situ water sampling data taken during
 glider deployment and recovery (for nearshore samples = lower salinity region) and historical ECOA water sampling data
@@ -20,14 +20,21 @@ import matplotlib.pyplot as plt
 import functions.common as cf
 
 
-def main(deploy, ecoa_discrete, glider_discrete, sDir):
-    ecoa_df = pd.read_csv(ecoa_discrete)
-    glider_df = pd.read_csv(glider_discrete)
+def main(deploy, deployment_season, deployment_region, sDir):
+    ecoa_data = '/Users/garzio/Documents/repo/lgarzio/phglider/water_sampling/ECOA.csv'
+    glider_ws_data = f'/Users/garzio/Documents/repo/lgarzio/phglider/water_sampling/ph_water_sampling_{deployment_region}.csv'
+    
+    ecoa_df = pd.read_csv(ecoa_data)
+    glider_df = pd.read_csv(glider_ws_data)
+    glider_df = glider_df[glider_df.season == deployment_season]
+    glider_sub = glider_df[['discrete_sal', 'discrete_ta']]  # TA units = umol/kg
+    df = ecoa_df.append(glider_sub)
+    df.dropna(inplace=True)
 
-    discrete_sal = np.append(np.array(ecoa_df.discrete_sal), np.array(glider_df.discrete_sal))
-    discrete_ta = np.append(np.array(ecoa_df.discrete_ta), np.array(glider_df.discrete_ta))  # units = umol/kg
+    # discrete_sal = np.append(np.array(ecoa_df.discrete_sal), np.array(glider_df.discrete_sal))
+    # discrete_ta = np.append(np.array(ecoa_df.discrete_ta), np.array(glider_df.discrete_ta))  # units = umol/kg
 
-    r_sq, m, b, y_predict = cf.linear_regression(discrete_sal, discrete_ta)
+    r_sq, m, b, y_predict = cf.linear_regression(np.array(df.discrete_sal), np.array(df.discrete_ta))
     equation = 'y = {}x + {}'.format(np.round(m, 2), np.round(b, 2))
 
     source = np.unique(glider_df['source']).tolist()
@@ -42,8 +49,8 @@ def main(deploy, ecoa_discrete, glider_discrete, sDir):
     fig, ax = plt.subplots()
     ax.plot(ecoa_df.discrete_sal, ecoa_df.discrete_ta, 'r.', ms=5, label='ECOA')
     ax.plot(glider_df.discrete_sal, glider_df.discrete_ta, 'b.', ms=5, label=glider_label)
-    ax.plot(discrete_sal, y_predict, 'k-', label=equation)
-    ax.text(np.nanmin(discrete_sal), np.nanmax(discrete_ta) * 0.97, 'R2: {}'.format(np.round(r_sq, 2)), fontsize=8)
+    ax.plot(df.discrete_sal, y_predict, 'k-', label=equation)
+    ax.text(np.nanmin(df.discrete_sal), np.nanmax(df.discrete_ta) * 0.97, 'R2: {}'.format(np.round(r_sq, 2)), fontsize=8)
     ax.set_xlabel('Salinity')
     ax.set_ylabel('Total Alkalinity')
     plt.legend(fontsize=8)
@@ -62,8 +69,8 @@ def main(deploy, ecoa_discrete, glider_discrete, sDir):
 
 
 if __name__ == '__main__':
-    deployment = 'ru30-20210226T1647'
-    ecoa_data = '/Users/garzio/Documents/repo/lgarzio/phglider/water_sampling/ECOA.csv'
-    glider_discrete_data = '/Users/garzio/Documents/repo/lgarzio/phglider/water_sampling/winter_water_sampling_nj.csv'
-    save_dir = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/plots'
-    main(deployment, ecoa_data, glider_discrete_data, save_dir)
+    deployment = 'ru30-20210503T1929'
+    season = 'spring'
+    region = 'mab'
+    save_dir = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210503T1929/delayed/'
+    main(deployment, season, region, save_dir)
