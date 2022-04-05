@@ -13,7 +13,7 @@
         "valid_max": 2147483647,
         "valid_min": 0
     },
-    "sci_water_pressure_dbar": {
+    "pressure": {
         "_FillValue": -999.0,
         "accuracy": " ",
         "ancillary_variables": " ",
@@ -73,9 +73,9 @@
         "standard_name": "mass_concentration_of_chlorophyll_a_in_seawater",
         "units": "ug/l"
     },
-    "oxygen_concentration_mgL": {
+    "oxygen_concentration_shifted_mgL": {
         "_FillValue": -999,
-        "comment": "transformed from umol/L to mg/L",
+        "comment": "transformed from oxygen_concentration umol/L to mg/L. oxygen_concentration is shifted by an optimal time shift in order to minimize separation between glider down and upcasts.",
         "ancillary variables": "sci_oxy4_oxygen",
         "observation type": "calculated",
         "instrument": "instrument_optode",
@@ -84,11 +84,11 @@
         "long_name": "Dissolved Oxygen",
         "units": "mg/L"
     },
-    "ph_total": {
+    "ph_total_shifted": {
         "_FillValue": -999,
         "ancillary_variables": "pressure,salinity,temperature,pH reference voltage,f1,f2,f3,f4,f5,f6,k0,k2",
         "observation type": "calculated",
-        "comment": "calculated from instrument calibration coefficents, pressure, salinity, temperature, and measured reference voltage",
+        "comment": "Calculated from instrument calibration coefficents, interpolated pressure, salinity, temperature, and measured reference voltage shifted by an optimal time shift in order to minimize separation between glider down and upcasts.",
         "source_sensor": "sci_sbe41n_ph_ref_voltage",
         "platform": "platform",
         "valid_max": 14,
@@ -98,7 +98,6 @@
         "_FillValue": -999,
         "ancillary_variables": "salinity",
         "observation_type": "calculated",
-        "comment": "calculated using seasonal TA-Salinity regression",
         "long_name": "Total Alkalinity"
     },
     "saturation_aragonite": {
@@ -150,18 +149,20 @@
         "valid_max": 10,
         "valid_min": 0
     },
-    "oxygen_concentration": {
+    "oxygen_concentration_shifted": {
         "_FillValue": -999,
         "observation type": "measured",
+		"comment": "Shifted by an optimal time shift in order to minimize separation between glider down and upcasts.",
         "instrument": "instrument_optode",
         "platform": "platform",
         "standard name": "mole_concentration_of_dissolved_molecular_oxygen_in_seawater",
         "long_name": "Dissolved Oxygen",
         "units": "micromoles L-1"
     },
-    "sbe41n_ph_ref_voltage": {
+    "sbe41n_ph_ref_voltage_shifted": {
         "_FillValue": -999,
         "ancillary_variables": "instrument_pH",
+		"comment": "Measured reference voltage shifted by an optimal time shift in order to minimize separation between glider down and upcasts.",
         "category": "pH",
         "instrument": "instrument_pH",
         "long_name": "sbe41n pH reference voltage",
