@@ -137,9 +137,13 @@ def profile_yos(fig, ax, da, yo_idx, colors, xlabel=None, ylabel=None, title=Non
             try:
                 x = da.values[jj:ii[j + 1]]
                 y = da.depth.values[jj:ii[j + 1]]
-                xmask = ~np.isnan(x)  # get rid of nans so the lines are continuous
-                ax.plot(x[xmask], y[xmask], c=c)  # plot lines
-                ax.scatter(x[xmask], y[xmask], color=c, s=30, edgecolor='None')
+                df = pd.DataFrame({'x': x, 'y': y})
+                # interpolate depth
+                df['y'] = df['y'].interpolate(method='linear', limit_direction='both')
+                df.dropna(subset=['x'], inplace=True)
+
+                ax.plot(df.x, df.y, c=c)  # plot lines
+                ax.scatter(df.x, df.y, color=c, s=30, edgecolor='None')
             except IndexError:
                 continue
 
@@ -156,7 +160,7 @@ def profile_yos(fig, ax, da, yo_idx, colors, xlabel=None, ylabel=None, title=Non
 
 
 def xsection(fig, ax, x, y, z, xlabel=None, ylabel=None, clabel=None, cmap=None, title=None, date_fmt=None,
-             grid=None):
+             grid=None, extend=None):
     xlabel = xlabel or 'Time'
     ylabel = ylabel or 'Depth (m)'
     clabel = clabel or None
@@ -164,6 +168,7 @@ def xsection(fig, ax, x, y, z, xlabel=None, ylabel=None, clabel=None, cmap=None,
     title = title or None
     date_fmt = date_fmt or None
     grid = grid or False
+    extend = extend or 'both'
 
     xc = ax.scatter(x, y, c=z, cmap=cmap, s=10, edgecolor='None')
 
@@ -179,9 +184,9 @@ def xsection(fig, ax, x, y, z, xlabel=None, ylabel=None, clabel=None, cmap=None,
     cax = divider.new_horizontal(size='5%', pad=0.1, axes_class=plt.Axes)
     fig.add_axes(cax)
     if clabel:
-        cb = plt.colorbar(xc, cax=cax, label=clabel)
+        cb = plt.colorbar(xc, cax=cax, label=clabel, extend=extend)
     else:
-        cb = plt.colorbar(xc, cax=cax)
+        cb = plt.colorbar(xc, cax=cax, extend=extend)
 
     # format x-axis
     if date_fmt:
