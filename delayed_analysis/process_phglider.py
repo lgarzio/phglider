@@ -106,9 +106,6 @@ def main(coord_lims, grconfig, fname):
     ds = ds.swap_dims({'obs': 'time'})
     ds = ds.sortby(ds.time)
 
-    savedir = os.path.join(os.path.dirname(fname), 'qc')
-    os.makedirs(savedir, exist_ok=True)
-
     # apply QARTOD QC to all variables except pressure
     qcvars = [x for x in list(ds.data_vars) if '_qartod_summary_flag' in x]
     for qv in qcvars:
