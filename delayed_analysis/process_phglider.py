@@ -4,7 +4,7 @@
 Author: Lori Garzio on 3/28/2022
 Last modified: 4/5/2022
 Process delayed-mode pH glider data.
-1. Apply QARTOD QC to CTD data (set data flagged as 3/SUSPECT and 4/FAIL to nan).
+1. Apply QARTOD QC flags (downloaded in the files) to CTD and DO data (set data flagged as 3/SUSPECT and 4/FAIL to nan).
 2. Set profiles flagged as 3/SUSPECT and 4/FAIL from CTD hysteresis tests to nan (conductivity, temperature,
 salinity and density).
 3. Run location QARTOD test.

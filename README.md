@@ -39,7 +39,7 @@ The toolbox should now be installed to your conda environment.
 2. [ta_sal_regression.py](https://github.com/lgarzio/phglider/blob/master/ta_equation/ta_sal_regression.py): Calculate the best fit TA-salinity linear regression from discrete samples.
 
 3. [process_phglider.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/process_phglider.py): Process delayed-mode pH glider data.
-   1. Apply QARTOD QC flags to CTD data.
+   1. Apply QARTOD QC flags (downloaded in the files) to CTD and DO data.
    2. Apply CTD hysteresis test flags.
    3. Run location QARTOD test.
    4. Convert pH voltages of 0.0 to nan.
