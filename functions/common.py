@@ -147,8 +147,8 @@ def find_calfile(deployment, sn):
 
 
 def find_configs(deployment):
-    # configdir = '/Users/garzio/Documents/repo/lgarzio/phglider/config'
-    configdir = '/home/lgarzio/repo/lgarzio/phglider/config'  # in server
+    configdir = '/Users/garzio/Documents/repo/lgarzio/phglider/config'
+    #configdir = '/home/lgarzio/repo/lgarzio/phglider/config'  # in server
     global_attributes = '{}/{}/global_attributes.json'.format(configdir, deployment)
     variable_attrs = '{}/variable_attrs.json'.format(configdir)
     instruments = '{}/{}/instruments.json'.format(configdir, deployment)
