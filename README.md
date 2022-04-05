@@ -45,12 +45,13 @@ The toolbox should now be installed to your conda environment.
    4. Convert pH voltages of 0.0 to nan.
    5. Interpolate (method=linear) pressure and remove data where pressure <1 dbar.
    6. Interpolate (method=linear) temperature and salinity.
-   7. Calculate pH from original and corrected voltages and interpolated CTD data.
-   8. Calculate Total Alkalinity from interpolated salinity using a linear relationship determined from in-situ water sampling.
-   9. Run ioos_qc gross range test on additional variables defined in the gross_range.yml config file, and apply test results to data.
-   10. Run QARTOD spike test on pH and corrected pH, and apply test results to data.
-   11. Calculate CO2SYS variables using TA, corrected pH, interpolated salinity, interpolated temperature, interpolated pressure.
-   12. Convert oxygen concentration to mg/L.
+   7. Remove interpolated data for profiles that failed hysteresis tests.
+   8. Calculate pH from original and corrected voltages and interpolated CTD data.
+   9. Calculate Total Alkalinity from interpolated salinity using a linear relationship determined from in-situ water sampling.
+   10. Run ioos_qc gross range test on additional variables defined in the gross_range.yml config file, and apply test results to data.
+   11. Run QARTOD spike test on pH and corrected pH, and apply test results to data.
+   12. Calculate CO2SYS variables using TA, corrected pH, interpolated salinity, interpolated temperature, interpolated pressure.
+   13. Convert oxygen concentration to mg/L.
 
 4. [plot_grouped_profiles_ph_qc.py](https://github.com/lgarzio/phglider/blob/master/plotting/plot_grouped_profiles_ph_qc.py): Plot corrected pH profiles with QARTOD gross range and spike tests applied.
 
