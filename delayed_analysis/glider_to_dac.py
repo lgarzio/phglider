@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 4/28/2021
-Last modified: 4/30/2021
+Last modified: 4/5/2021
 Process final glider dataset to upload to the IOOS glider DAC (https://gliders.ioos.us/).
 Modified from code written by Leila Belabbassi.
 """
@@ -19,8 +19,10 @@ pd.set_option('display.width', 320, "display.max_columns", 10)  # for display in
 
 def main(fname):
     deploy = '-'.join(fname.split('/')[-1].split('-')[0:2])
-    proc_vars = ['unix_time', 'sci_water_pressure_dbar', 'temperature', 'salinity', 'chlorophyll_a',
-                 'total_alkalinity', 'saturation_aragonite', 'latitude', 'longitude', 'conductivity']
+    proc_vars = ['unix_time', 'pressure', 'temperature', 'salinity', 'chlorophyll_a',
+                 'total_alkalinity', 'saturation_aragonite', 'latitude', 'longitude', 'conductivity',
+                 'sbe41n_ph_ref_voltage_shifted', 'ph_total_shifted', 'oxygen_concentration_shifted',
+                 'oxygen_concentration_shifted_mgL']
     ds = xr.open_dataset(fname)
 
     # add unix time
@@ -34,37 +36,18 @@ def main(fname):
     with open(va) as json_file:
         var_attrs = json.load(json_file)
 
-    # figure out if oxygen and ph were time shifted
-    shift_vars = ['sbe41n_ph_ref_voltage', 'ph_total', 'oxygen_concentration', 'oxygen_concentration_mgL']
-    for sv in shift_vars:
-        shift_name = '{}_shifted'.format(sv)
-        if np.sum(~np.isnan(ds[shift_name].values)):
-            varname = shift_name
-            # if the variable is shifted, add that information to the variable attributes
-            var_attrs[sv].update({'comment': ds[varname].comment})
-        else:
-            varname = sv
-        proc_vars.append(varname)
-        if 'ph_total' in sv:
-            phvar = varname
-
-    # apply QARTOD gross range and spike flags to pH data
-    ph_qcvars = ['qartod_{}_gross_range_flag'.format(phvar), 'qartod_{}_spike_flag'.format(phvar)]
-    for pqc in ph_qcvars:
-        ds[phvar][np.where(ds[pqc] > 1)] = np.nan  # turn any values not "good" to nan
+    # add additional attribute information to total_alkalinity and pH
+    var_attrs['total_alkalinity']['comment'] = ds.total_alkalinity.comment
+    phsensorcals = ds.polynomial_coefficients.calibration_coefficients
+    var_attrs['ph_total_shifted']['comment'] = ' sensor cals: '.join((var_attrs['ph_total_shifted']['comment'],
+                                                                      phsensorcals))
 
     # build a dictionary with the data and appropriate variable attributes
     data_dict = {'data_vars': {}}
     for key in proc_vars:
-        print(key)
-        splitter = key.split('_')
-        if splitter[-1] == 'shifted':
-            name = '_'.join(splitter[0:-1])
-        else:
-            name = key
-        data_dict['data_vars'].update({name: {'dims': 'time',
-                                              'data': ds[key].values,
-                                              'attrs': var_attrs[name]}})
+        data_dict['data_vars'].update({key: {'dims': 'time',
+                                             'data': ds[key].values,
+                                             'attrs': var_attrs[key]}})
 
     # add global attributes
     with open(ga) as json_file:
@@ -94,17 +77,16 @@ def main(fname):
         instruments = json.load(json_file)
 
     for key, values in instruments.items():
-        print(key)
         ds[key] = np.nan
         ds[key].attrs = values
 
     # rename variables so they match the previous versions that were sent to the DAC
-    rename_dict = {'unix_time': 'UnixTime', 'sci_water_pressure_dbar': 'Pressure', 'temperature': 'Temperature',
+    rename_dict = {'unix_time': 'UnixTime', 'pressure': 'Pressure', 'temperature': 'Temperature',
                    'salinity': 'Salinity', 'chlorophyll_a': 'Chlorophyll', 'total_alkalinity': 'TotalAlkalinity',
                    'saturation_aragonite': 'AragoniteSaturationState', 'latitude': 'Latitude',
                    'longitude': 'Longitude', 'conductivity': 'Conductivity',
-                   'sbe41n_ph_ref_voltage': 'pHReferenceVoltage', 'ph_total': 'pH',
-                   'oxygen_concentration': 'Oxygen_molar', 'oxygen_concentration_mgL': 'Oxygen_mgL'}
+                   'sbe41n_ph_ref_voltage_shifted': 'pHReferenceVoltage', 'ph_total_shifted': 'pH',
+                   'oxygen_concentration_shifted': 'Oxygen_molar', 'oxygen_concentration_shifted_mgL': 'Oxygen_mgL'}
     ds = ds.rename(rename_dict)
 
     nc_filename = '{}/{}_to_dac.nc'.format(os.path.dirname(fname), deploy)
@@ -112,5 +94,5 @@ def main(fname):
 
 
 if __name__ == '__main__':
-    ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/ru30-20210226T1647-profile-sci-delayed_shifted_qc.nc'
+    ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/ru30-20210226T1647-profile-sci-delayed_qc.nc'
     main(ncfile)
