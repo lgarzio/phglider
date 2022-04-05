@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 3/8/2021
-Last modified: 3/30/2022
+Last modified: 4/5/2022
 """
 import datetime as dt
 import glob
@@ -235,6 +235,19 @@ def plot_vars_dac():
                 'pH': {'cmap': cmo.cm.matter, 'ttl': 'pH'},
                 'TotalAlkalinity': {'cmap': cmo.cm.matter, 'ttl': 'Total Alkalinity'},
                 'AragoniteSaturationState': {'cmap': cmo.cm.matter, 'ttl': 'Aragonite Saturation State'}
+                }
+    return plt_vars
+
+
+def plot_vars_delayed():
+    plt_vars = {'temperature': {'cmap': cmo.cm.thermal, 'ttl': 'Temperature ({})'.format(r'$\rm ^oC$')},
+                'salinity': {'cmap': cmo.cm.haline, 'ttl': 'Salinity'},
+                'density': {'cmap': cmo.cm.dense, 'ttl': 'Density (kg m-3)'},
+                'chlorophyll_a': {'cmap': cmo.cm.algae, 'ttl': 'Chlorophyll ({}g/L)'.format(chr(956))},
+                'oxygen_concentration_shifted_mgL': {'cmap': cmo.cm.oxy, 'ttl': 'Oxygen (mg/L)', 'clims': [0, 350]},
+                'ph_total_shifted': {'cmap': cmo.cm.matter, 'ttl': 'pH'},
+                'saturation_aragonite': {'cmap': cmo.cm.matter, 'ttl': 'Aragonite Saturation State'},
+                'total_alkalinity': {'cmap': cmo.cm.matter, 'ttl': 'Total Alkalinity'}
                 }
     return plt_vars
 
