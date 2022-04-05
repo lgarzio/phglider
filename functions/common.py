@@ -156,6 +156,15 @@ def find_configs(deployment):
     return global_attributes, variable_attrs, instruments
 
 
+def get_dataset_variables(server, dataset_id):
+    e = ERDDAP(server=server,
+               protocol='tabledap',
+               response='nc')
+    var_dict = e._get_variables(dataset_id=dataset_id)
+
+    return list(var_dict.keys())
+
+
 def get_erddap_dataset(server, ds_id, variables=None, constraints=None):
     variables = variables or None
     constraints = constraints or None
