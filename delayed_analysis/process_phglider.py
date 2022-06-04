@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 3/28/2022
-Last modified: 4/5/2022
+Last modified: 6/4/2022
 Process delayed-mode pH glider data.
 1. Apply QARTOD QC flags (downloaded in the files) to CTD and DO data (set data flagged as 3/SUSPECT and 4/FAIL to nan).
 2. Set profiles flagged as 3/SUSPECT and 4/FAIL from CTD hysteresis tests to nan (conductivity, temperature,
@@ -310,8 +310,8 @@ def main(coord_lims, grconfig, fname):
     # add the CO2SYS variables to the dataset
     attrs = assign_co2sys_attrs(omega_arag, '1', 'Aragonite Saturation State')
     da = xr.DataArray(omega_arag.astype('float32'), coords=ta.coords, dims=ta.dims, attrs=attrs,
-                      name='saturation_aragonite')
-    phds['saturation_aragonite'] = da
+                      name='aragonite_saturation_state')
+    phds['aragonite_saturation_state'] = da
 
     attrs = assign_co2sys_attrs(pco2, 'uatm', 'pCO2')
     da = xr.DataArray(pco2.astype('float32'), coords=ta.coords, dims=ta.dims, attrs=attrs,
