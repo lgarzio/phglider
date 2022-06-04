@@ -24,6 +24,7 @@
     "instrument_ph": {
         "_FillValue": -999,
         "calibration_date": "2020-09-28",
+		"calibration_coefficients": " ",
 		"comment": "V2",
 		"factory_calibrated": "2020-09-28",
 		"long_name": "Deep ISFET Ocean pH Sensor",
