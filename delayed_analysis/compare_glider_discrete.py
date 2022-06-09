@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 9/16/2021
-Last modified: 4/5/2022
+Last modified: 6/9/2022
 Compare glider data to discrete water samples collected during glider deployment/recovery
 """
 
@@ -23,6 +23,13 @@ pd.set_option('display.width', 320, "display.max_columns", 15)  # for display in
 def main(fname):
     save_dir = os.path.join(os.path.dirname(fname), 'compare_glider_discrete')
     os.makedirs(save_dir, exist_ok=True)
+
+    summary_headers = ['deployment_recovery', 'glider_date', 'discrete_date', 'time_difference_minutes',
+                       'glider_pressure_dbar', 'discrete_pressure_dbar', 'glider_lon', 'glider_lat',
+                       'discrete_lon', 'discrete_lat', 'distance_m', 'glider_ph', 'discrete_ph', 'diff_ph',
+                       'glider_ta', 'discrete_ta', 'diff_ta', 'glider_temp', 'discrete_temp', 'glider_sal',
+                       'discrete_sal']
+    summary_rows = []
 
     basedir = Path().absolute().parent
     discrete_samples = os.path.join(basedir, 'water_sampling', 'NOAA_OA_pH_discrete_samples.csv')
@@ -62,7 +69,6 @@ def main(fname):
                   opt_total_borate=1,
                   opt_k_fluoride=2)
 
-
     results = pyco2.sys(par1, par2, par1_type, par2_type, **kwargs)
     df['ph_corrected'] = results['pH_out']
 
@@ -88,13 +94,16 @@ def main(fname):
                 slon = np.round(sample_lon[0], 4)
                 sample_meta = f'Sample: {st_str}, location {[slat, slon]}'
 
-                # find the closest glider profile to the sample collection
+                # find the closest glider profile to the sample collection, take that profile and the one before and after
                 a = abs(sample_lat[0] - ds.profile_lat.values) + abs(sample_lon[0] - ds.profile_lon.values)
-                idx = np.unravel_index(a.argmin(), a.shape)
+                idx = a.argmin()
+                # if idx > 0:
+                #     select = 'test'
+                # else:
+                #     glider_profile_lat = ds.profile_lat.values[0:2]
                 glider_profile_lat = ds.profile_lat.values[idx]
                 dss = ds.sel(profile_lat=glider_profile_lat)
                 dss_t0 = pd.to_datetime(np.nanmin(dss.time.values))
-                dss_tf = pd.to_datetime(np.nanmax(dss.time.values))
 
                 # glider metadata
                 dss_t0str = pd.to_datetime(dss_t0).strftime('%Y-%m-%dT%H:%M')
@@ -106,8 +115,8 @@ def main(fname):
                 geod = Geodesic.WGS84
                 g = geod.Inverse(gllat, gllon, slat, slon)
                 diff_loc_meters = np.round(g['s12'], 2)
-                diff_seconds = np.round(abs(dss_t0 - pd.to_datetime(sample_time)).seconds / 60, 2)
-                diff_meta = f'Difference: {diff_seconds} seconds, {diff_loc_meters} meters'
+                diff_mins = np.round(abs(dss_t0 - pd.to_datetime(sample_time)).seconds / 60, 2)
+                diff_meta = f'Difference: {diff_mins} minutes, {diff_loc_meters} meters'
 
                 for pv in plt_vars:
                     # get the discrete water sample data
@@ -158,8 +167,42 @@ def main(fname):
                     plt.savefig(sfile, dpi=300)
                     plt.close()
 
+                # write summary file
+                discrete_pressure_unique = np.unique(df_drt.pressure_dbar)  # TODO a line for each discrete pressure sampled
+                for dpu in discrete_pressure_unique:
+                    sdf = df_drt.loc[df_drt['pressure_dbar'] == dpu]
+                    discrete_pressure = np.nanmedian(sdf.pressure_dbar)
+                    if discrete_pressure < 1:
+                        gl_pressure_idx = np.where(dss.pressure_interpolated < 3)[0]
+                    else:
+                        press1 = discrete_pressure - 1.5
+                        press2 = discrete_pressure + 1.5
+                        gl_pressure_idx = np.where(np.logical_and(dss.pressure_interpolated > press1,
+                                                                  dss.pressure_interpolated < press2))[0]
+                    gl_pressure = np.round(np.nanmedian(dss.pressure_interpolated[gl_pressure_idx]), 3)
+
+                    discrete_ph = np.round(np.nanmedian(sdf.ph_corrected), 3)
+                    glider_ph = np.round(np.nanmedian(dss.ph_total_shifted[gl_pressure_idx]), 3)
+                    ph_diff = np.round(glider_ph - discrete_ph, 3)
+                    discrete_ta = np.round(np.nanmedian(sdf.AverageTA), 3)
+                    glider_ta = np.round(np.nanmedian(dss.total_alkalinity[gl_pressure_idx]), 3)
+                    ta_diff = np.round(glider_ta - discrete_ta, 3)
+                    discrete_temp = np.round(np.nanmedian(sdf.temp_c), 3)
+                    glider_temp = np.round(np.nanmedian(dss.temperature_interpolated[gl_pressure_idx]), 3)
+                    discrete_sal = np.round(np.nanmedian(sdf.sal), 3)
+                    glider_sal = np.round(np.nanmedian(dss.salinity_interpolated[gl_pressure_idx]), 3)
+
+                    summary_data = [dr, dss_t0str, st_str, diff_mins, gl_pressure, discrete_pressure, gllon, gllat,
+                                    slon, slat, diff_loc_meters, glider_ph, discrete_ph, ph_diff, glider_ta, discrete_ta,
+                                    ta_diff, glider_temp, discrete_temp, glider_sal, discrete_sal]
+
+                    summary_rows.append(summary_data)
+
             else:
                 raise ValueError(f'too many lat/lons for samples collected at {st_str}')
+
+    summary_df = pd.DataFrame(summary_rows, columns=summary_headers)
+    summary_df.to_csv(os.path.join(save_dir, f'{deploy}_compare_glider_discrete.csv'), index=False)
 
 
 if __name__ == '__main__':
