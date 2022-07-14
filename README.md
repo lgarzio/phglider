@@ -49,7 +49,7 @@ The toolbox should now be installed to your conda environment.
    8. Calculate pH from original and corrected voltages and interpolated CTD data.
    9. Calculate Total Alkalinity from interpolated salinity using a linear relationship determined from in-situ water sampling.
    10. Run ioos_qc gross range test on additional variables defined in the gross_range.yml config file, and apply test results to data.
-   11. Run QARTOD spike test on pH and corrected pH, and apply test results to data.
+   11. Run ioos_qc spike test on pH and corrected pH, and apply test results to data.
    12. Calculate CO2SYS variables using TA, corrected pH, interpolated salinity, interpolated temperature, interpolated pressure.
    13. Convert oxygen concentration to mg/L.
 

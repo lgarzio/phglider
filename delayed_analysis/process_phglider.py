@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 3/28/2022
-Last modified: 6/4/2022
+Last modified: 7/14/2022
 Process delayed-mode pH glider data.
 1. Apply QARTOD QC flags (downloaded in the files) to CTD and DO data (set data flagged as 3/SUSPECT and 4/FAIL to nan).
 2. Set profiles flagged as 3/SUSPECT and 4/FAIL from CTD hysteresis tests to nan (conductivity, temperature,
@@ -17,7 +17,7 @@ salinity and density).
 sampling.
 10. Run ioos_qc gross range test on additional variables defined in the gross_range.yml config file (e.g. calculated pH,
 chlorophyll-a) and apply test results to data.
-11. Run QARTOD spike test on pH and corrected pH, and apply test results to data.
+11. Run ioos_qc spike test on pH and corrected pH, and apply test results to data.
 12. TODO Run QARTOD rate of change test on pH and corrected pH (not implemented)
 13. Calculate CO2SYS variables using TA, corrected pH, interpolated salinity, interpolated temperature, interpolated
 pressure.
@@ -29,12 +29,14 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import json
+from ioos_qc import qartod
 from ioos_qc.config import Config
 from ioos_qc.streams import XarrayStream
 from ioos_qc.results import collect_results
+from ioos_qc.utils import load_config_as_dict as loadconfig
 import functions.common as cf
 import functions.phcalc as phcalc
-import functions.qc as qc
+import functions.qc as fqc
 pd.set_option('display.width', 320, "display.max_columns", 10)  # for display in pycharm console
 
 
@@ -100,7 +102,7 @@ def delete_attr(da):
     return da
 
 
-def main(coord_lims, grconfig, fname):
+def main(coord_lims, configdir, fname):
     deploy = '-'.join(fname.split('/')[-1].split('-')[0:2])
     ds = xr.open_dataset(fname)
     ds = ds.drop_vars(names=['profile_id', 'rowSize'])
@@ -133,7 +135,7 @@ def main(coord_lims, grconfig, fname):
                 ds[tv][qc_idx] = np.nan
 
     # QARTOD Location Test
-    ds = qc.location_test(ds, coord_lims)
+    ds = fqc.location_test(ds, coord_lims)
     qv = 'location_qartod_test'
     qc_idx = np.where(np.logical_or(ds[qv].values == 3, ds[qv].values == 4))[0]
     if len(qc_idx) > 0:
@@ -237,7 +239,7 @@ def main(coord_lims, grconfig, fname):
     phds['total_alkalinity'] = ta
 
     # Run ioos_qc gross range test based on the configuration file
-    c = Config(grconfig)
+    c = Config(os.path.join(configdir, 'gross_range.yml'))
     xs = XarrayStream(phds, time='time', lat='latitude', lon='longitude')
     qc_results = xs.run(c)
     collected_list = collect_results(qc_results, how='list')
@@ -250,7 +252,7 @@ def main(coord_lims, grconfig, fname):
         flag_results = cl.results.data
 
         # Define gross range QC variable attributes
-        attrs = qc.assign_qartod_attrs(test, sensor, c.config[sensor]['qartod'][test])
+        attrs = fqc.assign_qartod_attrs(test, sensor, c.config[sensor]['qartod'][test])
         if not hasattr(phds[sensor], 'ancillary_variables'):
             phds[sensor].attrs['ancillary_variables'] = qc_varname
         else:
@@ -279,13 +281,38 @@ def main(coord_lims, grconfig, fname):
         else:
             phds[sensor].attrs['comment'] = '. '.join((phds[sensor].comment, f'{len(qc_idx)} {test} flags applied'))
 
-    # QARTOD Spike Test
-    ph_thresholds = {'suspect': 0.05, 'fail': 0.2, 'seconds': 30}  # 0.05 is the detection limit of the sensor
-    da = qc.spike_test(phds, 'ph_total', ph_thresholds)
-    phds[da.name] = da
+    # run ioos_qc spike test on pH - original and time-shifted
+    spike_settings = loadconfig(os.path.join(configdir, 'spike_test.yml'))['spike_settings']
 
-    da = qc.spike_test(phds, 'ph_total_shifted', ph_thresholds)
-    phds[da.name] = da
+    varnames = ['ph_total', 'ph_total_shifted']
+    for vn in varnames:
+        data = phds[vn]
+        non_nan_ind = np.invert(np.isnan(data))  # identify where not nan
+        non_nan_i = np.where(non_nan_ind)[0]  # get locations of non-nans
+        tdiff = np.diff(data.time[non_nan_ind]).astype('timedelta64[s]').astype(float)  # get time interval (s) between non-nan points
+        tdiff_long = np.where(tdiff > 60 * 5)[0]  # locate time intervals > 5 min
+        tdiff_long_i = np.append(non_nan_i[tdiff_long], non_nan_i[tdiff_long + 1])  # original locations of where time interval is long
+
+        # convert original threshold from units/s to units/average-timestep
+        spike_settings['suspect_threshold'] = spike_settings['suspect_threshold'] * np.nanmedian(tdiff)
+        spike_settings['fail_threshold'] = spike_settings['fail_threshold'] * np.nanmedian(tdiff)
+
+        flag_vals = 2 * np.ones(np.shape(data))
+        flag_vals[np.invert(non_nan_ind)] = qartod.QartodFlags.MISSING
+
+        # only run the test if the array has values
+        if len(non_nan_i) > 0:
+            flag_vals[non_nan_ind] = qartod.spike_test(inp=data.values[non_nan_ind],
+                                                       **spike_settings)
+
+            # flag as not evaluated/unknown on either end of long time gap
+            flag_vals[tdiff_long_i] = qartod.QartodFlags.UNKNOWN
+
+            qc_varname = f'{vn}_qartod_spike_test'
+            attrs = fqc.assign_qartod_attrs('spike_test', vn, spike_settings)
+            da = xr.DataArray(flag_vals.astype('int32'), coords=data.coords, dims=data.dims, attrs=attrs,
+                              name=qc_varname)
+            phds[qc_varname] = da
 
     # apply spike test flags
     for qv in ['ph_total_qartod_spike_test', 'ph_total_shifted_qartod_spike_test']:
@@ -335,6 +362,6 @@ def main(coord_lims, grconfig, fname):
 
 if __name__ == '__main__':
     coordinate_lims = {'latitude': [36, 43], 'longitude': [-76, -66]}
-    gross_range_config = '/Users/garzio/Documents/repo/lgarzio/phglider/config/gross_range.yml'
+    configs = '/Users/garzio/Documents/repo/lgarzio/phglider/config'
     ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/ru30-20210226T1647-profile-sci-delayed.nc'
-    main(coordinate_lims, gross_range_config, ncfile)
+    main(coordinate_lims, configs, ncfile)
