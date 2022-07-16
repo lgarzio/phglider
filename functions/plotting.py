@@ -69,7 +69,10 @@ def glider_track(fig, ax, ds, region, bathy=None, landcolor=None, title=None, cu
         levels = np.arange(-5000, 5100, 50)
         bath_lat = bathy.variables['lat'][:]
         bath_lon = bathy.variables['lon'][:]
-        bath_elev = bathy.variables['elevation'][:]
+        try:
+            bath_elev = bathy.variables['elevation'][:]
+        except KeyError:
+            bath_elev = bathy.variables['altitude'][:]
         plt.contourf(bath_lon, bath_lat, bath_elev,  levels, cmap=cmo.cm.topo, transform=ccrs.PlateCarree())
 
         levels = np.arange(-100, 0, 50)

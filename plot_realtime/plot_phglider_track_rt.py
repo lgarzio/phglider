@@ -2,12 +2,13 @@
 
 """
 Author: Lori Garzio on 5/12/2021
-Last modified: 5/12/2021
+Last modified: 7/15/2022
 Plot realtime glider track
 """
 
 import argparse
 import sys
+import os
 import datetime as dt
 import numpy as np
 import pandas as pd
@@ -19,11 +20,18 @@ import functions.plotting as pf
 plt.rcParams.update({'font.size': 12})
 
 
+def subset_bathymetry(bathy_file, extent):
+    bathymetry = xr.open_dataset(bathy_file)
+    return bathymetry.sel(lon=slice(extent[0] - .1, extent[1] + .1),
+                          lat=slice(extent[2] - .1, extent[3] + .1))
+
+
 #def main(deploy, sfilename):
 def main(args):
     ru_server = 'http://slocum-data.marine.rutgers.edu//erddap'
-    # bathymetry = '/Users/garzio/Documents/rucool/bathymetry/GEBCO_2014_2D_-100.0_0.0_-10.0_50.0.nc'
-    bathymetry = '/home/lgarzio/bathymetry_files/GEBCO_2014_2D_-100.0_0.0_-10.0_50.0.nc'  # on server
+    # bathymetry_dir = '/Users/garzio/Documents/rucool/bathymetry'
+    bathymetry_dir = '/home/lgarzio/bathymetry_files'  # on server
+    bathymetry = os.path.join(bathymetry_dir, 'GEBCO_2014_2D_-100.0_0.0_-10.0_50.0.nc')
     deploy = args.deployment
     glider_id = '{}-profile-sci-rt'.format(deploy)
     glider_vars = ['latitude', 'longitude']
@@ -43,11 +51,13 @@ def main(args):
     title = f'{deploy.split("-")[0]} track: {t0} to {tf}\nUpdated: {now} EST'
 
     extent = glider_region['extent']
-    bathy = xr.open_dataset(bathymetry)
+    bathy = subset_bathymetry(bathymetry, extent)
+    if len(bathy.elevation) == 0:
+        bathymetry = os.path.join(bathymetry_dir, 'GMRTv4_0_20220715topo-gulfofalaska.grd')
+        bathy = subset_bathymetry(bathymetry, extent)
 
     kwargs = dict()
-    kwargs['bathy'] = bathy.sel(lon=slice(extent[0] - .1, extent[1] + .1),
-                                lat=slice(extent[2] - .1, extent[3] + .1))
+    kwargs['bathy'] = bathy
 
     kwargs['title'] = title
     kwargs['landcolor'] = 'none'

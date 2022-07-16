@@ -184,10 +184,10 @@ def get_erddap_dataset(server, ds_id, variables=None, constraints=None):
 
 def glider_region(ds):
     try:
-        extent = [np.nanmin(ds.longitude.values) - 1.75, np.nanmax(ds.longitude.values) + 1.75,
+        extent = [np.nanmin(ds.longitude.values) - 2, np.nanmax(ds.longitude.values) + 2,
                   np.nanmin(ds.latitude.values) - 1.5, np.nanmax(ds.latitude.values) + 1.5]
     except AttributeError:
-        extent = [np.nanmin(ds.Longitude.values) - 1.75, np.nanmax(ds.Longitude.values) + 1.75,
+        extent = [np.nanmin(ds.Longitude.values) - 2, np.nanmax(ds.Longitude.values) + 2,
                   np.nanmin(ds.Latitude.values) - 1.5, np.nanmax(ds.Latitude.values) + 1.5]
     region = dict()
     region['extent'] = extent
