@@ -21,7 +21,7 @@
 	"metadata_link" : " ",
 	"naming_authority" : "edu.rutgers.marine",
 	"platform_type" : "Slocum Glider",
-	"processing_level" : "Delayed mode data. Salinity, pH, TA, and Aragonite have been calculated from raw variables. QA/QC measures have been run according to the IOOS Manual for Real-Time Quality Control of pH Observations.",
+	"processing_level" : "Delayed mode data. Salinity, pH, TA, and Aragonite have been calculated from raw variables. QA/QC measures have been run according to the IOOS Manual for Real-Time Quality Control of pH Observations. pH and dissolved oxygen variables have been corrected for sensor lag by applying optimal time shifts calculated by glider segment in order to minimize separation between glider down and upcasts.",
 	"project" : "NOAA OAP (Ocean Acidification Program)/IOOS, Sustained Underwater Glider Observations for Improving Atlantic Tropical Cyclone Intensity Forecast",
 	"publisher_email" : "lgarzio@marine.rutgers.edu",
 	"publisher_name" : "Lori Garzio",

@@ -168,10 +168,10 @@
         "standard_name": "mass_concentration_of_chlorophyll_a_in_seawater",
         "units": "ug/l"
     },
-    "oxygen_concentration_shifted_mgL": {
+    "oxygen_concentration_mgL": {
         "_FillValue": -999,
-        "comment": "transformed from oxygen_concentration umol/L to mg/L. oxygen_concentration is shifted by an optimal time shift in order to minimize separation between glider down and upcasts.",
-        "ancillary variables": "sci_oxy4_oxygen",
+        "comment": "transformed from oxygen_concentration_raw umol/L to mg/L.",
+        "ancillary variables": "oxygen_concentration_raw",
         "observation type": "calculated",
         "instrument": "instrument_optode",
         "platform": "platform",
@@ -179,13 +179,32 @@
         "long_name": "Dissolved Oxygen",
         "units": "mg/L"
     },
+    "oxygen_concentration_shifted_mgL": {
+        "_FillValue": -999,
+        "comment": "transformed from oxygen_concentration_corrected umol/L to mg/L. oxygen_concentration is shifted by an optimal time shift calculated by glider segment in order to minimize separation between glider down and upcasts.",
+        "ancillary variables": "oxygen_concentration_corrected",
+        "observation type": "calculated",
+        "instrument": "instrument_optode",
+        "platform": "platform",
+        "standard name": "concentration_of_dissolved_oxygen_in_seawater",
+        "long_name": "Dissolved Oxygen",
+        "units": "mg/L"
+    },
+    "ph_total": {
+        "_FillValue": -999,
+        "ancillary_variables": "pressure_interpolated,salinity_interpolated,temperature_interpolated,pH_reference_voltage_raw,f1,f2,f3,f4,f5,f6,k0,k2",
+        "observation type": "calculated",
+        "comment": "Calculated from instrument calibration coefficents, interpolated pressure, salinity, temperature, and measured reference voltage.",
+        "source_sensor": "sci_sbe41n_ph_ref_voltage",
+        "valid_max": 14,
+        "valid_min": 0
+    },
     "ph_total_shifted": {
         "_FillValue": -999,
-        "ancillary_variables": "pressure,salinity,temperature,pH reference voltage,f1,f2,f3,f4,f5,f6,k0,k2",
+        "ancillary_variables": "pressure_interpolated,salinity_interpolated,temperature_interpolated,pH_reference_voltage_corrected,f1,f2,f3,f4,f5,f6,k0,k2",
         "observation type": "calculated",
-        "comment": "Calculated from instrument calibration coefficents, interpolated pressure, salinity, temperature, and measured reference voltage shifted by an optimal time shift in order to minimize separation between glider down and upcasts.",
+        "comment": "Calculated from instrument calibration coefficents, interpolated pressure, salinity, temperature, and measured reference voltage shifted by an optimal time shift calculated by glider segment in order to minimize separation between glider down and upcasts.",
         "source_sensor": "sci_sbe41n_ph_ref_voltage",
-        "platform": "platform",
         "valid_max": 14,
         "valid_min": 0
     },
@@ -197,10 +216,10 @@
     },
     "aragonite_saturation_state": {
         "_FillValue": -999,
-        "ancillary_variables": "temperature,pressure,salinity,pH,TA",
+        "ancillary_variables": "pressure_interpolated,temperature_interpolated,salinity_interpolated,ph_corrected,total_alkalinity",
         "observation_type": "calculated",
         "long_name": "Aragonite Saturation State",
-        "comment": "calculated using PyCO2SYS (Humphreys et al. (2020) doi:10.5281/zenodo.3744275, Lewis and Wallace (1998)) with inputs of pH on the total scale, total alkalinity, in situ salinity, in situ temperature, in situ pressure, K1 and K2 dissociation constants defined by Merbach and refit by Dickson and Millero, KSO4 dissociation constant of Dickson, KHF dissociation constant of Perez and Fraga, and borate-to-salinity ratio of Uppstrom (1979)"
+        "comment": "calculated using PyCO2SYS (Humphreys et al. (2020) doi:10.5281/zenodo.3744275, Lewis and Wallace (1998)) with inputs of corrected pH on the total scale, total alkalinity, in situ salinity_interpolated, in situ temperature_interpolated, in situ pressure_interpolated, K1 and K2 dissociation constants defined by Merbach and refit by Dickson and Millero, KSO4 dissociation constant of Dickson, KHF dissociation constant of Perez and Fraga, and borate-to-salinity ratio of Uppstrom (1979)"
     },
     "latitude": {
         "_FillValue": -999.0,
@@ -244,20 +263,55 @@
         "valid_max": 10,
         "valid_min": 0
     },
-    "oxygen_concentration_shifted": {
+    "oxygen_saturation": {
+        "_FillValue": -999,
+        "instrument": "instrument_optode",
+        "standard name": "fractional_saturation_of_oxygen_in_sea_water",
+        "long_name": "Oxygen Saturation",
+        "units": "percent"
+    },
+    "oxygen_saturation_shifted": {
+        "_FillValue": -999,
+		"ancillary_variables": "oxygen_saturation_raw",
+		"comment": "Oxygen saturation shifted by an optimal time shift calculated by glider segment in order to minimize separation between glider down and upcasts.",
+        "instrument": "instrument_optode",
+        "standard name": "fractional_saturation_of_oxygen_in_sea_water",
+        "long_name": "Oxygen Saturation",
+        "units": "percent"
+    },
+    "oxygen_concentration": {
         "_FillValue": -999,
         "observation type": "measured",
-		"comment": "Shifted by an optimal time shift in order to minimize separation between glider down and upcasts.",
         "instrument": "instrument_optode",
-        "platform": "platform",
         "standard name": "mole_concentration_of_dissolved_molecular_oxygen_in_seawater",
         "long_name": "Dissolved Oxygen",
         "units": "micromoles L-1"
     },
+    "oxygen_concentration_shifted": {
+        "_FillValue": -999,
+        "observation type": "calculated",
+		"ancillary_variables": "oxygen_concentration_raw",
+		"comment": "Measured oxygen concentration shifted by an optimal time shift calculated by glider segment in order to minimize separation between glider down and upcasts.",
+        "instrument": "instrument_optode",
+        "standard name": "mole_concentration_of_dissolved_molecular_oxygen_in_seawater",
+        "long_name": "Dissolved Oxygen",
+        "units": "micromoles L-1"
+    },
+    "sbe41n_ph_ref_voltage": {
+        "_FillValue": -999,
+		"observation_type": "measured",
+        "ancillary_variables": "instrument_pH",
+		"comment": "Measured pH reference voltage",
+        "category": "pH",
+        "instrument": "instrument_pH",
+        "long_name": "sbe41n pH reference voltage",
+        "units": "volts"
+    },
     "sbe41n_ph_ref_voltage_shifted": {
         "_FillValue": -999,
-        "ancillary_variables": "instrument_pH",
-		"comment": "Measured reference voltage shifted by an optimal time shift in order to minimize separation between glider down and upcasts.",
+		"observation_type": "calculated",
+        "ancillary_variables": "pH_reference_voltage_raw",
+		"comment": "Measured pH reference voltage shifted by an optimal time shift calculated by glider segment in order to minimize separation between glider down and upcasts.",
         "category": "pH",
         "instrument": "instrument_pH",
         "long_name": "sbe41n pH reference voltage",
