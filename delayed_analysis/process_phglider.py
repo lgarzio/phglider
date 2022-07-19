@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 3/28/2022
-Last modified: 7/14/2022
+Last modified: 7/19/2022
 Process delayed-mode pH glider data.
 1. Apply QARTOD QC flags (downloaded in the files) to CTD and DO data (set data flagged as 3/SUSPECT and 4/FAIL to nan).
 2. Set profiles flagged as 3/SUSPECT and 4/FAIL from CTD hysteresis tests to nan (conductivity, temperature,
@@ -53,11 +53,13 @@ def assign_co2sys_attrs(array, units, long_name):
     # Defining gross/flatline QC variable attributes
     attrs = {
         'actual_range': [vmin, vmax],
+        'ancillary_variables': 'pressure_interpolated temperature_interpolated salinity_interpolated '
+                               'ph_total_shifted total_alkalinity',
         'observation_type': 'calculated',
         'units': units,
         'long_name': long_name,
         'comment': 'Calculated using the PyCO2SYS function with inputs of interpolated pressure, '
-                   'interpolated temperature, interpolated salinity, Total Alkalinity and pH'
+                   'interpolated temperature, interpolated salinity, Total Alkalinity and corrected pH'
     }
 
     return attrs
