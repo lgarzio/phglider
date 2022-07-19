@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 9/16/2021
-Last modified: 6/9/2022
+Last modified: 7/19/2022
 Compare glider data to discrete water samples collected during glider deployment/recovery
 """
 
@@ -74,7 +74,6 @@ def main(fname):
 
     ds = xr.open_dataset(fname)
     ds = ds.sortby(ds.time)
-    ds = ds.swap_dims({'time': 'profile_lat'})
     filename = fname.split('/')[-1]
     deploy = f'{filename.split("-")[0]}-{filename.split("-")[1]}'
     df2 = df.loc[df['deployment'] == deploy]
@@ -94,15 +93,42 @@ def main(fname):
                 slon = np.round(sample_lon[0], 4)
                 sample_meta = f'Sample: {st_str}, location {[slat, slon]}'
 
-                # find the closest glider profile to the sample collection, take that profile and the one before and after
-                a = abs(sample_lat[0] - ds.profile_lat.values) + abs(sample_lon[0] - ds.profile_lon.values)
-                idx = a.argmin()
-                # if idx > 0:
-                #     select = 'test'
-                # else:
-                #     glider_profile_lat = ds.profile_lat.values[0:2]
-                glider_profile_lat = ds.profile_lat.values[idx]
-                dss = ds.sel(profile_lat=glider_profile_lat)
+                # find the closest glider profile to the sample collection
+                data = dict(glat=ds.profile_lat.values, glon=ds.profile_lon.values,
+                            slat=np.repeat(slat, len(ds.profile_lat.values)),
+                            slon=np.repeat(slon, len(ds.profile_lat.values)))
+                df = pd.DataFrame(data)
+                df.drop_duplicates(inplace=True)
+
+                # calculate distances from each glider profile to sample location
+                geod = Geodesic.WGS84
+                distances = np.array([])
+                for ii, row in df.iterrows():
+                    g = geod.Inverse(row.glat, row.glon, row.slat, row.slon)
+                    distances = np.append(distances, g['s12'])
+
+                # find the smallest distance
+                idx = distances.argmin()
+                plat = df.iloc[idx].glat
+                plat_idx = np.where(ds.profile_lat.values == plat)[0]
+
+                # subset the data
+                dss = ds.isel(time=plat_idx)
+
+                # determine if the glider profile is ascending or descending to grab the corresponding profile
+                d0 = np.nanmedian(dss.depth.values[0:10])
+                d1 = np.nanmedian(dss.depth.values[-10:-1])
+
+                if d0 < d1:  # descending profile, grab the next profile to complete the pair
+                    idx2 = idx + 1
+                else:  # ascending profile, grab the previous profile to complete the pair
+                    idx2 = idx - 1
+                plat2 = df.iloc[idx2].glat
+                plat_idx2 = np.where(np.logical_or(ds.profile_lat.values == plat, ds.profile_lat.values == plat2))[0]
+
+                # subset the data again to get the down-up profile pair
+                dss = ds.isel(time=plat_idx2)
+
                 dss_t0 = pd.to_datetime(np.nanmin(dss.time.values))
 
                 # glider metadata
@@ -111,10 +137,8 @@ def main(fname):
                 gllon = np.round(np.unique(dss.profile_lon.values[0]), 4)[0]
                 glider_meta = f'Glider profile: {dss_t0str}, location {[gllat, gllon]}'
 
-                # calculate distance between glider and samples
-                geod = Geodesic.WGS84
-                g = geod.Inverse(gllat, gllon, slat, slon)
-                diff_loc_meters = np.round(g['s12'], 2)
+                # differences between glider and samples - distance and time
+                diff_loc_meters = np.round(distances[idx], 2)
                 diff_mins = np.round(abs(dss_t0 - pd.to_datetime(sample_time)).seconds / 60, 2)
                 diff_meta = f'Difference: {diff_mins} minutes, {diff_loc_meters} meters'
 
@@ -168,7 +192,7 @@ def main(fname):
                     plt.close()
 
                 # write summary file
-                discrete_pressure_unique = np.unique(df_drt.pressure_dbar)  # TODO a line for each discrete pressure sampled
+                discrete_pressure_unique = np.unique(df_drt.pressure_dbar)
                 for dpu in discrete_pressure_unique:
                     sdf = df_drt.loc[df_drt['pressure_dbar'] == dpu]
                     discrete_pressure = np.nanmedian(sdf.pressure_dbar)
