@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 4/28/2021
-Last modified: 7/19/2022
+Last modified: 7/21/2022
 Process final glider dataset to upload to the IOOS glider DAC (https://gliders.ioos.us/).
 Modified from code written by Leila Belabbassi.
 """
@@ -27,8 +27,8 @@ def main(fname):
                  'aragonite_saturation_state', 'conductivity',
                  'sbe41n_ph_ref_voltage', 'sbe41n_ph_ref_voltage_shifted', 'ph_total', 'ph_total_shifted',
                  'oxygen_concentration', 'oxygen_concentration_shifted', 'oxygen_saturation',
-                 'oxygen_saturation_shifted', 'oxygen_concentration_mgL', 'oxygen_concentration_shifted_mgL',
-                 'pressure_interpolated', 'temperature_interpolated', 'salinity_interpolated']
+                 'oxygen_saturation_shifted', 'pressure_interpolated', 'temperature_interpolated',
+                 'salinity_interpolated']
     ds = xr.open_dataset(fname)
 
     # find deployment configuration files
@@ -92,9 +92,7 @@ def main(fname):
                    'oxygen_concentration': 'oxygen_concentration_raw',
                    'oxygen_concentration_shifted': 'oxygen_concentration_corrected',
                    'oxygen_saturation': 'oxygen_saturation_raw',
-                   'oxygen_saturation_shifted': 'oxygen_saturation_corrected',
-                   'oxygen_concentration_mgL': 'oxygen_concentration_mgl_raw',
-                   'oxygen_concentration_shifted_mgL': 'oxygen_concentration_mgl_corrected'}
+                   'oxygen_saturation_shifted': 'oxygen_saturation_corrected'}
     ds = ds.rename(rename_dict)
 
     # split up the dataset into profile files
