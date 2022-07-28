@@ -143,9 +143,8 @@ def main(fname):
         for a, b in zip(lon, lat):
             writer.writerow({'lon': a, 'lat': b})
 
-    savefile = os.path.join(savedir, f'{fname.split("/")[-1].split("_qc.nc")[0]}_ncei.nc')
+    savefile = os.path.join(savedir, f'{deploy}-delayed.nc')
     ds.to_netcdf(savefile, encoding=var_encoding, format="netCDF4", engine="netcdf4", unlimited_dims=["time"])
-
 
 
 if __name__ == '__main__':
