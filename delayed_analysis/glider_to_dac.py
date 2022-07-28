@@ -2,8 +2,9 @@
 
 """
 Author: Lori Garzio on 4/28/2021
-Last modified: 7/21/2022
-Process final glider dataset to upload to the IOOS glider DAC (https://gliders.ioos.us/).
+Last modified: 7/28/2022
+Process final glider dataset to upload to the IOOS glider DAC (https://gliders.ioos.us/) and
+NCEI OA data portal (https://www.ncei.noaa.gov/access/ocean-carbon-acidification-data-system-portal/)
 Modified from code written by Leila Belabbassi.
 """
 
@@ -13,8 +14,25 @@ import pandas as pd
 import xarray as xr
 import datetime as dt
 import json
+import csv
 import functions.common as cf
 pd.set_option('display.width', 320, "display.max_columns", 10)  # for display in pycharm console
+
+
+def make_encoding(dataset, time_start="seconds since 1970-01-01 00:00:00", fillvalue=-9999.0, datatype=np.float32):
+    encoding = dict()
+
+    for k in dataset.data_vars:
+        if 'time' in k:
+            # add the encoding for profile_time so xarray exports the proper time
+            encoding[k] = dict(units=time_start, calendar="gregorian", zlib=False, _FillValue=None, dtype=np.double)
+        else:
+            encoding[k] = dict(zlib=True, _FillValue=np.float32(fillvalue), dtype=datatype)
+
+    # add the encoding for profile_time so xarray exports the proper time
+    encoding["time"] = dict(units=time_start, calendar="gregorian", zlib=False, _FillValue=None, dtype=np.double)
+
+    return encoding
 
 
 def main(fname):
@@ -95,18 +113,38 @@ def main(fname):
                    'oxygen_saturation_shifted': 'oxygen_saturation_corrected'}
     ds = ds.rename(rename_dict)
 
+    # specify the variable encoding
+    var_encoding = make_encoding(ds)
+
     # split up the dataset into profile files
-    ds = ds.swap_dims({'time': 'profile_time'})
-    for pt in np.unique(ds.profile_time.values):
-        dspt = ds.sel(profile_time=pt)
+    ds_dac = ds.swap_dims({'time': 'profile_time'})
+    for pt in np.unique(ds_dac.profile_time.values):
+        dspt = ds_dac.sel(profile_time=pt)
         try:
             dspt = dspt.swap_dims({'profile_time': 'time'})
             dspt = dspt.reset_coords(names='profile_time')
             nc_fname = '{}_{}_delayed.nc'.format(deploy.split('-')[0], pd.to_datetime(pt).strftime('%Y%m%dT%H%MZ'))
             nc_filename = os.path.join(savedir, nc_fname)
-            dspt.to_netcdf(nc_filename)
+            dspt.to_netcdf(nc_filename, encoding=var_encoding, format="netCDF4", engine="netcdf4",
+                           unlimited_dims=["time"])
         except ValueError:
             continue
+
+    # format file for NCEI submission
+    savedir = os.path.join(os.path.dirname(fname), 'ncei')
+    os.makedirs(savedir, exist_ok=True)
+
+    # export tab-delimited lonlat.txt file NCEI data submission
+    lon = list(np.round(ds.lon.values, 4))
+    lat = list(np.round(ds.lat.values, 4))
+    txt_file = os.path.join(savedir, f'lonlat-{deploy}.txt')
+    with open(txt_file, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=['lon', 'lat'], delimiter='\t')
+        for a, b in zip(lon, lat):
+            writer.writerow({'lon': a, 'lat': b})
+
+    savefile = os.path.join(savedir, f'{fname.split("/")[-1].split("_qc.nc")[0]}_ncei.nc')
+    ds.to_netcdf(savefile, encoding=var_encoding, format="netCDF4", engine="netcdf4", unlimited_dims=["time"])
 
 
 if __name__ == '__main__':
