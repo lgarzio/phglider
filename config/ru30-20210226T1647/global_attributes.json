@@ -3,6 +3,7 @@
 	"Conventions" : "CF-1.6, Unidata Dataset Discovery v1.0",
 	"ncei_template_version" : "NCEI_NetCDF_TrajectoryProfile_Orthogonal_Template_v2.0",
 	"featureType" : "trajectoryProfile",
+	"cdm_data_type" : "Trajectory",
 	"acknowledgment" : "This deployment supported by the NOAA Ocean Acidification Program and U.S. Integrated Ocean Observing System",
 	"comment" : "Glider operated by the Rutgers University Center for Coastal Ocean Observing Leadership, Rutgers University, USA. Deployed by Chip Haldeman, Elizabeth Wright-Fairbanks, and Theodore Thompson aboard the R/V Rutgers, with shore support by Dave Aragon.",
 	"contributor_name" : "Grace Saba, Elizabeth Wright-Fairbanks, Theodore Thompson, Dave Aragon, Nicole Waite, Chip Haldeman, John Kerfoot, Laura Nazzaro, Lori Garzio",
@@ -28,7 +29,7 @@
 	"references" : "Saba et al 2019 https://doi.org/10.3389/fmars.2019.00664, Wright-Fairbanks et al 2020 https://doi.org/10.1029/2020JC016505, PyCO2SYS (Humphreys et al. (2020) doi:10.5281/zenodo.3744275, Lewis and Wallace (1998)), IOOS QC Manual for Real-Time Quality Control of pH Data Observations https://cdn.ioos.noaa.gov/media/2019/08/pHfinal_8_15_19b.pdf, IOOS QC Manual of Glider Data https://cdn.ioos.noaa.gov/media/2017/12/Manual-for-QC-of-Glider-Data_05_09_16.pdf",
 	"sea_name" : "Mid-Atlantic Bight",
 	"source" : "Observational data from a profiling glider", 
-	"standard_name_vocabulary" : "CF-v25",
+	"standard_name_vocabulary" : "CF-v79",
 	"summary" : "This project is conducting seasonal deployments to investigate carbonate chemistry and monitor ocean acidification in the Mid-Atlantic Bight. The glider used for the automated observation includes an integrated deep rated version of the Ion Sensitive Field Effect Transistor (ISFET)-based pH sensor. The pH sensor unit is complemented with existing glider sensors including a CTD, a WETLabs FLBBCD ECO puck configured for simultaneous chlorophyll fluorescence and optical backscatter measurements, and an Aanderaa Optode for measuring dissolved oxygen. This approximately 21 to 30 day deployment out of Tuckerton, NJ will run a cross-shelf transect (along E line) to an offshore waypoint north of Carteret Canyon, then transect SSW to Wilmington Canyon, then NW back to Tuckerton, NJ as the battery pack allows. This glider track will cover Atlantic sea scallop and Atlantic surfclam habitats in the southern MAB. The dataset contains CTD, chlorphyll a, CDOM and optical backscatter measurements. Dissolved oxygen and pH data were processed post-deployment. Delayed mode dataset",
 	"title" : " ",
 	"wmo_id" : "4801946"

@@ -1,23 +1,20 @@
 {
-    "time": {
-        "_FillValue": -9999.0,
+	"time": {
         "axis": "T",
         "bytes": "8",
         "comment": "Alias for m_present_time",
 		"long_name": "m_present_time",
-        "observation type": "measured",
+        "observation_type": "measured",
         "processing_level": 2,
-        "source sensor": "m_present_time",
+        "source_sensor": "m_present_time",
         "standard_name": "time",
         "valid_max": 2147483647,
         "valid_min": 0
     },
     "pressure": {
-        "_FillValue": -9999.0,
         "instrument": "instrument_ctd",
         "long_name": "CTD Pressure",
         "observation_type": "measured",
-        "platform": "platform",
         "positive": "down",
         "precision": "2",
         "reference_datum": "sea-surface",
@@ -28,13 +25,11 @@
         "valid_min": 0
     },
     "pressure_interpolated": {
-        "_FillValue": -9999.0,
         "ancillary_variables": "pressure",
         "comment": "linear interpolated pressure used to calculate pH",
         "instrument": "instrument_ctd",
         "long_name": "CTD Pressure",
         "observation_type": "calculated",
-        "platform": "platform",
         "positive": "down",
         "precision": "2",
         "reference_datum": "sea-surface",
@@ -45,96 +40,79 @@
         "valid_min": 0
     },
     "depth": {
-        "_FillValue": -9999.0,
         "comment": "Calculated from llat_pressure and llat_latitude using gsw.z_from_p",
         "instrument": "instrument_ctd",
         "long_name": "CTD Depth",
         "observation_type": "calculated",
-        "platform": "platform",
         "positive": "down",
         "precision": "2",
         "reference_datum": "sea-surface",
-        "standard_name": "sea_water_depth",
         "units": "meters",
 		"axis": "Z",
         "valid_max": 2000,
         "valid_min": 0
     },
     "temperature": {
-        "_FillValue": -9999.0,
         "instrument": "instrument_ctd",
         "long_name": "Temperature",
         "observation_type": "measured",
-        "platform": "platform",
         "standard_name": "sea_water_temperature",
         "units": "Celsius",
         "valid_max": 40.0,
         "valid_min": -5.0
     },
     "temperature_interpolated": {
-        "_FillValue": -9999.0,
 		"comment": "linear interpolated temperature used to calculate pH",
         "ancillary_variables": "temperature",
         "instrument": "instrument_ctd",
         "long_name": "Temperature",
         "observation_type": "calculated",
-        "platform": "platform",
         "standard_name": "sea_water_temperature",
         "units": "Celsius",
         "valid_max": 40.0,
         "valid_min": -5.0
     },
     "salinity": {
-        "_FillValue": -9999.0,
-        "ancillary_variables": "conductivity, temperature, pressure",
+        "ancillary_variables": "conductivity temperature pressure",
         "instrument": "instrument_ctd",
         "long_name": "Salinity",
         "observation_type": "calculated",
-        "platform": "platform",
         "standard_name": "sea_water_practical_salinity",
         "units": "1",
         "valid_max": 40.0,
         "valid_min": 0.0
     },
     "salinity_interpolated": {
-        "_FillValue": -9999.0,
 		"comment": "linear interpolated salinity used to calculate pH",
         "ancillary_variables": "salinity",
         "instrument": "instrument_ctd",
         "long_name": "Salinity",
         "observation_type": "calculated",
-        "platform": "platform",
         "standard_name": "sea_water_practical_salinity",
         "units": "1",
         "valid_max": 40.0,
         "valid_min": 0.0
     },
     "density": {
-        "_FillValue": -9999.0,
-        "ancillary_variables": "conductivity, temperature, pressure",
+        "ancillary_variables": "conductivity temperature pressure",
         "instrument": "instrument_ctd",
         "long_name": "Density",
         "observation_type": "calculated",
-        "platform": "platform",
         "standard_name": "sea_water_density",
         "units": "kg m-3",
         "valid_max": 1015.0,
         "valid_min": 1040.0
     },
     "chlorophyll_a": {
-        "_FillValue": -9999.0,
         "instrument": "instrument_flbbcd",
         "long_name": "Chlorophyll a",
-        "observation type": "measured",
-        "platform": "platform",
+        "observation_type": "measured",
         "sensor": "sci_flbbcd_chlor_units",
-        "standard_name": "mass_concentration_of_chlorophyll_a_in_seawater",
         "units": "ug/l"
     },
     "ph_total": {
-        "_FillValue": -9999.0,
-        "ancillary_variables": "pressure_interpolated,salinity_interpolated,temperature_interpolated,pH_reference_voltage_raw,f1,f2,f3,f4,f5,f6,k0,k2",
-        "observation type": "calculated",
+        "ancillary_variables": "pressure_interpolated salinity_interpolated temperature_interpolated pH_reference_voltage_raw",
+        "observation_type": "calculated",
         "comment": "Calculated from instrument calibration coefficents, interpolated pressure, salinity, temperature, and measured reference voltage.",
         "source_sensor": "sci_sbe41n_ph_ref_voltage",
 		"standard_name": "sea_water_ph_reported_on_total_scale",
@@ -142,9 +120,8 @@
         "valid_min": 0
     },
     "ph_total_shifted": {
-        "_FillValue": -9999.0,
-        "ancillary_variables": "pressure_interpolated,salinity_interpolated,temperature_interpolated,pH_reference_voltage_corrected,f1,f2,f3,f4,f5,f6,k0,k2",
-        "observation type": "calculated",
+        "ancillary_variables": "pressure_interpolated salinity_interpolated temperature_interpolated pH_reference_voltage_corrected",
+        "observation_type": "calculated",
         "comment": "Calculated from instrument calibration coefficents, interpolated pressure, salinity, temperature, and measured reference voltage shifted by an optimal time shift calculated by glider segment in order to minimize separation between glider down and upcasts.",
         "source_sensor": "sci_sbe41n_ph_ref_voltage",
 		"standard_name": "sea_water_ph_reported_on_total_scale",
@@ -152,27 +129,22 @@
         "valid_min": 0
     },
     "total_alkalinity": {
-        "_FillValue": -9999.0,
         "ancillary_variables": "salinity",
         "observation_type": "calculated",
         "long_name": "Total Alkalinity",
-		"standard_name": "sea_water_alkalinity_expressed_as_mole_equivalent",
 		"units": "micromoles kg-1"
     },
     "aragonite_saturation_state": {
-        "_FillValue": -9999.0,
-        "ancillary_variables": "pressure_interpolated,temperature_interpolated,salinity_interpolated,ph_corrected,total_alkalinity",
+        "ancillary_variables": "pressure_interpolated temperature_interpolated salinity_interpolated pH_corrected total_alkalinity",
         "observation_type": "calculated",
         "long_name": "Aragonite Saturation State",
         "comment": "calculated using PyCO2SYS (Humphreys et al. (2020) doi:10.5281/zenodo.3744275, Lewis and Wallace (1998)) with inputs of corrected pH on the total scale, total alkalinity, in situ salinity_interpolated, in situ temperature_interpolated, in situ pressure_interpolated, K1 and K2 dissociation constants defined by Merbach and refit by Dickson and Millero, KSO4 dissociation constant of Dickson, KHF dissociation constant of Perez and Fraga, and borate-to-salinity ratio of Uppstrom (1979)"
     },
     "latitude": {
-        "_FillValue": -9999.0,
         "comment": "m_gps_lat converted to decimal degrees and interpolated",
         "coordinate_reference_frame": " ",
         "long_name": "Latitude",
         "observation_type": "calculated",
-        "platform": "platform",
         "standard_name": "latitude",
         "units": "degrees_north",
 		"axis": "Y",
@@ -180,12 +152,10 @@
         "valid_min": -90.0
     },
     "longitude": {
-        "_FillValue": -9999.0,
         "comment": "m_gps_lon converted to decimal degrees and interpolated",
         "coordinate_reference_frame": " ",
         "long_name": "Longitude",
         "observation_type": "calculated",
-        "platform": "platform",
         "standard_name": "longitude",
         "units": "degrees_east",
 		"axis": "X",
@@ -193,25 +163,21 @@
         "valid_min": -180.0
     },
     "conductivity": {
-        "_FillValue": -9999.0,
         "instrument": "instrument_ctd",
         "long_name": "Conductivity",
         "observation_type": "measured",
-        "platform": "platform",
         "standard_name": "sea_water_electrical_conductivity",
         "units": "S m-1",
         "valid_max": 10,
         "valid_min": 0
     },
     "oxygen_saturation": {
-        "_FillValue": -9999.0,
         "instrument": "instrument_optode",
         "standard_name": "fractional_saturation_of_oxygen_in_sea_water",
         "long_name": "Oxygen Saturation",
         "units": "percent"
     },
     "oxygen_saturation_shifted": {
-        "_FillValue": -9999.0,
 		"ancillary_variables": "oxygen_saturation_raw",
 		"comment": "Oxygen saturation shifted by an optimal time shift calculated by glider segment in order to minimize separation between glider down and upcasts.",
         "instrument": "instrument_optode",
@@ -220,51 +186,43 @@
         "units": "percent"
     },
     "oxygen_concentration": {
-        "_FillValue": -9999.0,
-        "observation type": "measured",
+        "observation_type": "measured",
         "instrument": "instrument_optode",
-        "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_seawater",
         "long_name": "Dissolved Oxygen",
         "units": "micromoles L-1"
     },
     "oxygen_concentration_shifted": {
-        "_FillValue": -9999.0,
-        "observation type": "calculated",
+        "observation_type": "calculated",
 		"ancillary_variables": "oxygen_concentration_raw",
 		"comment": "Measured oxygen concentration shifted by an optimal time shift calculated by glider segment in order to minimize separation between glider down and upcasts.",
         "instrument": "instrument_optode",
-        "standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_seawater",
         "long_name": "Dissolved Oxygen",
         "units": "micromoles L-1"
     },
     "sbe41n_ph_ref_voltage": {
-        "_FillValue": -9999.0,
 		"observation_type": "measured",
-        "ancillary_variables": "instrument_pH",
+        "ancillary_variables": "instrument_ph",
 		"comment": "Measured pH reference voltage",
         "category": "pH",
-        "instrument": "instrument_pH",
+        "instrument": "instrument_ph",
         "long_name": "sbe41n pH reference voltage",
         "units": "volts"
     },
     "sbe41n_ph_ref_voltage_shifted": {
-        "_FillValue": -9999.0,
 		"observation_type": "calculated",
         "ancillary_variables": "pH_reference_voltage_raw",
 		"comment": "Measured pH reference voltage shifted by an optimal time shift calculated by glider segment in order to minimize separation between glider down and upcasts.",
         "category": "pH",
-        "instrument": "instrument_pH",
+        "instrument": "instrument_ph",
         "long_name": "sbe41n pH reference voltage",
         "units": "volts"
     },
     "profile_time": {
-        "_FillValue": -9999.0,
 		"axis": "T",
 		"comment": "Timestamp corresponding to the mid-point of the profile",
         "ioos_category": "Time",
         "long_name": "Profile Center Time",
         "observation_type": "calculated",
-		"platform": "platform",
 		"processing_level": 2,
 		"standard_name": "time",
 		"time_origin": "01-JAN-1970 00:00:00",
@@ -273,13 +231,11 @@
 		"valid_min": 0
     },
     "profile_lon": {
-        "_FillValue": -9999.0,
 		"axis": "X",
 		"comment": "Value is interpolated to provide an estimate of the longitude at the mid-point of the profile",
         "coordinate_reference_frame": "urn:ogc:crs:EPSG::4326",
         "long_name": "Profile Center Longitude",
         "observation_type": "calculated",
-		"platform": "platform",
 		"precision": 5,
 		"processing_level": 2,
 		"reference": "WGS84",
@@ -290,13 +246,11 @@
 		"valid_min": -180.0
     },
     "profile_lat": {
-        "_FillValue": -9999.0,
 		"axis": "Y",
 		"comment": "Value is interpolated to provide an estimate of the latitude at the mid-point of the profile",
         "coordinate_reference_frame": "urn:ogc:crs:EPSG::4326",
         "long_name": "Profile Center Latitude",
         "observation_type": "calculated",
-		"platform": "platform",
 		"precision": 5,
 		"processing_level": 2,
 		"reference": "WGS84",
