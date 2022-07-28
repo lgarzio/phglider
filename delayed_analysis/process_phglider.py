@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 3/28/2022
-Last modified: 7/19/2022
+Last modified: 7/26/2022
 Process delayed-mode pH glider data.
 1. Apply QARTOD QC flags (downloaded in the files) to CTD and DO data (set data flagged as 3/SUSPECT and 4/FAIL to nan).
 2. Set profiles flagged as 3/SUSPECT and 4/FAIL from CTD hysteresis tests to nan (conductivity, temperature,
@@ -104,7 +104,7 @@ def delete_attr(da):
     return da
 
 
-def main(coord_lims, configdir, fname):
+def main(coord_lims, configdir, fname, method):
     deploy = '-'.join(fname.split('/')[-1].split('-')[0:2])
     ds = xr.open_dataset(fname)
     ds = ds.drop_vars(names=['profile_id', 'rowSize'])
@@ -158,9 +158,13 @@ def main(coord_lims, configdir, fname):
     # convert to dataframe and drop duplicated timestamps
     df = ds.to_dataframe()
 
-    # interpolate pressure, and drop all data where pressure < 1 dbar
+    # interpolate pressure, and drop all data where pressure < 1 dbar for final processed dataset only
     df['pressure_interpolated'] = df['pressure'].interpolate(method='linear', limit_direction='both')
-    df = df[df['pressure_interpolated'] >= 1].copy()
+    if method == 'final':
+        df = df[df['pressure_interpolated'] >= 1].copy()
+        savefile = f'{fname.split(".nc")[0]}_qc.nc'
+    else:
+        savefile = f'{fname.split(".nc")[0]}_watersampling_qc.nc'
 
     # drop duplicated timestamps
     df = df[~df.index.duplicated(keep='first')]
@@ -359,11 +363,12 @@ def main(coord_lims, configdir, fname):
         da = xr.DataArray(data.astype('float32'), coords=ta.coords, dims=ta.dims, attrs=attrs, name=name)
         phds[name] = da
 
-    phds.to_netcdf('{}_qc.nc'.format(fname.split('.nc')[0]))
+    phds.to_netcdf(savefile)
 
 
 if __name__ == '__main__':
     coordinate_lims = {'latitude': [36, 43], 'longitude': [-76, -66]}
     configs = '/Users/garzio/Documents/repo/lgarzio/phglider/config'
     ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/ru30-20210226T1647-profile-sci-delayed.nc'
-    main(coordinate_lims, configs, ncfile)
+    method = 'final'  # 'final' 'water_sampling
+    main(coordinate_lims, configs, ncfile, method)
