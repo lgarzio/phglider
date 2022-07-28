@@ -1,6 +1,6 @@
 {
-	"Metadata_Conventions" : "CF-1.6, Unidata Dataset Discovery v1.0",
-	"Conventions" : "CF-1.6, Unidata Dataset Discovery v1.0",
+	"Metadata_Conventions" : "CF-1.8, Unidata Dataset Discovery v1.0",
+	"Conventions" : "CF-1.8, Unidata Dataset Discovery v1.0",
 	"ncei_template_version" : "NCEI_NetCDF_TrajectoryProfile_Orthogonal_Template_v2.0",
 	"featureType" : "trajectoryProfile",
 	"cdm_data_type" : "Trajectory",

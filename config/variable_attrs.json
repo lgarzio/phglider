@@ -116,6 +116,7 @@
         "comment": "Calculated from instrument calibration coefficents, interpolated pressure, salinity, temperature, and measured reference voltage.",
         "source_sensor": "sci_sbe41n_ph_ref_voltage",
 		"standard_name": "sea_water_ph_reported_on_total_scale",
+		"units": "1",
         "valid_max": 14,
         "valid_min": 0
     },
@@ -125,6 +126,7 @@
         "comment": "Calculated from instrument calibration coefficents, interpolated pressure, salinity, temperature, and measured reference voltage shifted by an optimal time shift calculated by glider segment in order to minimize separation between glider down and upcasts.",
         "source_sensor": "sci_sbe41n_ph_ref_voltage",
 		"standard_name": "sea_water_ph_reported_on_total_scale",
+		"units": "1",
         "valid_max": 14,
         "valid_min": 0
     },
@@ -138,6 +140,7 @@
         "ancillary_variables": "pressure_interpolated temperature_interpolated salinity_interpolated pH_corrected total_alkalinity",
         "observation_type": "calculated",
         "long_name": "Aragonite Saturation State",
+		"units": "1",
         "comment": "calculated using PyCO2SYS (Humphreys et al. (2020) doi:10.5281/zenodo.3744275, Lewis and Wallace (1998)) with inputs of corrected pH on the total scale, total alkalinity, in situ salinity_interpolated, in situ temperature_interpolated, in situ pressure_interpolated, K1 and K2 dissociation constants defined by Merbach and refit by Dickson and Millero, KSO4 dissociation constant of Dickson, KHF dissociation constant of Perez and Fraga, and borate-to-salinity ratio of Uppstrom (1979)"
     },
     "latitude": {
