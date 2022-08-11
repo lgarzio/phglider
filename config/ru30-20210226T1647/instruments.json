@@ -49,5 +49,10 @@
 		"serial_number": "242",
 		"type": "instrument",
 		"user_calibrated": "2020-02-03"
+    },
+    "trajectory": {
+        "comment": "A trajectory is a single deployment of a glider. The trajectory for this deployment is",
+		"ioos_category": "Identifier",
+		"long_name": "Trajectory/Deployment Name"
     }
 }

@@ -3,7 +3,7 @@
         "axis": "T",
         "bytes": "8",
         "comment": "Alias for m_present_time",
-		"long_name": "m_present_time",
+		"long_name": "Time",
         "observation_type": "measured",
         "processing_level": 2,
         "source_sensor": "m_present_time",
@@ -73,7 +73,8 @@
         "valid_min": -5.0
     },
     "salinity": {
-        "ancillary_variables": "conductivity temperature pressure",
+        "comment": "Practical salinity calculated from conductivity, temperature, and pressure using the Gibbs gsw SP_from_C function.",
+		"ancillary_variables": "conductivity temperature pressure",
         "instrument": "instrument_ctd",
         "long_name": "Salinity",
         "observation_type": "calculated",
@@ -94,7 +95,8 @@
         "valid_min": 0.0
     },
     "density": {
-        "ancillary_variables": "conductivity temperature pressure",
+		"comment": "Density calculated from temperature, practical salinity, pressure, latitude, and longitude using Gibbs gsw SA_from_SP, CT_from_t, and rho functions.",
+        "ancillary_variables": "temperature pressure salinity lat lon",
         "instrument": "instrument_ctd",
         "long_name": "Density",
         "observation_type": "calculated",
@@ -113,7 +115,7 @@
     "ph_total": {
         "ancillary_variables": "pressure_interpolated salinity_interpolated temperature_interpolated pH_reference_voltage_raw",
         "observation_type": "calculated",
-        "comment": "Calculated from instrument calibration coefficents, interpolated pressure, salinity, temperature, and measured reference voltage.",
+        "comment": "Calculated from sensor calibration coefficents, interpolated pressure, salinity, temperature, and measured reference voltage.",
         "source_sensor": "sci_sbe41n_ph_ref_voltage",
 		"standard_name": "sea_water_ph_reported_on_total_scale",
 		"units": "1",
@@ -123,7 +125,7 @@
     "ph_total_shifted": {
         "ancillary_variables": "pressure_interpolated salinity_interpolated temperature_interpolated pH_reference_voltage_corrected",
         "observation_type": "calculated",
-        "comment": "Calculated from instrument calibration coefficents, interpolated pressure, salinity, temperature, and measured reference voltage shifted by an optimal time shift calculated by glider segment in order to minimize separation between glider down and upcasts.",
+        "comment": "Calculated from sensor calibration coefficents, interpolated pressure, salinity, temperature, and measured reference voltage shifted by an optimal time shift calculated by glider segment in order to minimize separation between glider down and upcasts.",
         "source_sensor": "sci_sbe41n_ph_ref_voltage",
 		"standard_name": "sea_water_ph_reported_on_total_scale",
 		"units": "1",
@@ -141,7 +143,7 @@
         "observation_type": "calculated",
         "long_name": "Aragonite Saturation State",
 		"units": "1",
-        "comment": "calculated using PyCO2SYS (Humphreys et al. (2020) doi:10.5281/zenodo.3744275, Lewis and Wallace (1998)) with inputs of corrected pH on the total scale, total alkalinity, in situ salinity_interpolated, in situ temperature_interpolated, in situ pressure_interpolated, K1 and K2 dissociation constants defined by Merbach and refit by Dickson and Millero, KSO4 dissociation constant of Dickson, KHF dissociation constant of Perez and Fraga, and borate-to-salinity ratio of Uppstrom (1979)"
+        "comment": "Calculated using PyCO2SYS (Humphreys et al. (2020) doi:10.5281/zenodo.3744275, Lewis and Wallace (1998)) with inputs of corrected pH on the total scale, total alkalinity, in situ salinity_interpolated, in situ temperature_interpolated, in situ pressure_interpolated, K1 and K2 dissociation constants defined by Merbach and refit by Dickson and Millero, KSO4 dissociation constant of Dickson, KHF dissociation constant of Perez and Fraga, and borate-to-salinity ratio of Uppstrom (1979)"
     },
     "latitude": {
         "comment": "m_gps_lat converted to decimal degrees and interpolated",
