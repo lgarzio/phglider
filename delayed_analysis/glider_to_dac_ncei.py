@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 4/28/2021
-Last modified: 7/28/2022
+Last modified: 8/31/2022
 Process final glider dataset to upload to the IOOS glider DAC (https://gliders.ioos.us/) and
 NCEI OA data portal (https://www.ncei.noaa.gov/access/ocean-carbon-acidification-data-system-portal/)
 Modified from code written by Leila Belabbassi.
@@ -14,6 +14,7 @@ import pandas as pd
 import xarray as xr
 import datetime as dt
 import json
+import ast
 import csv
 import functions.common as cf
 pd.set_option('display.width', 320, "display.max_columns", 10)  # for display in pycharm console
@@ -23,13 +24,17 @@ def make_encoding(dataset, time_start="seconds since 1970-01-01 00:00:00", fillv
     encoding = dict()
 
     for k in dataset.data_vars:
-        if 'time' in k:
+        if 'profile_time' in k:
             # add the encoding for profile_time so xarray exports the proper time
-            encoding[k] = dict(units=time_start, calendar="gregorian", zlib=False, _FillValue=None, dtype=np.double)
+            encoding[k] = dict(units=time_start, calendar="gregorian", zlib=False, _FillValue=-9999.0, dtype=np.double)
+        elif 'profile_id' in k:
+            encoding[k] = dict(_FillValue=2147483647, dtype=np.int32)
+        elif 'trajectory' in k:
+            encoding[k] = dict(dtype=object)
         else:
             encoding[k] = dict(zlib=True, _FillValue=np.float32(fillvalue), dtype=datatype)
 
-    # add the encoding for profile_time so xarray exports the proper time
+    # add the encoding for time so xarray exports the proper time
     encoding["time"] = dict(units=time_start, calendar="gregorian", zlib=False, _FillValue=None, dtype=np.double)
 
     return encoding
@@ -49,16 +54,16 @@ def main(fname):
                  'salinity_interpolated']
     ds = xr.open_dataset(fname)
 
+    # get the pH sensor calibration coefficients
+    phsensorcals = ast.literal_eval(ds.polynomial_coefficients.calibration_coefficients)
+
     # find deployment configuration files
     ga, va, inst = cf.find_configs(deploy)
     with open(va) as json_file:
         var_attrs = json.load(json_file)
 
-    # add additional attribute information to total_alkalinity and instrument_pH
+    # add additional attribute information to total_alkalinity
     var_attrs['total_alkalinity']['comment'] = ds.total_alkalinity.comment
-    phsensorcals = ds.polynomial_coefficients.calibration_coefficients
-    var_attrs['ph_total_shifted']['comment'] = ' sensor cals: '.join((var_attrs['ph_total_shifted']['comment'],
-                                                                      phsensorcals))
 
     # build a dictionary with the data and appropriate variable attributes
     data_dict = {'data_vars': {}}
@@ -90,6 +95,31 @@ def main(fname):
     # convert to dataset
     ds = xr.Dataset.from_dict(data_dict)
 
+    # add profile_id
+    attributes = dict(
+        ancillary_variables='profile_time',
+        cf_role='profile_id',
+        comment='Unique identifier of the profile. The profile ID is the mean profile timestamp.',
+        ioos_category='Identifier',
+        long_name='Profile ID'
+    )
+    name = 'profile_id'
+    pid = ds.profile_time.values.astype('datetime64[s]').astype('int')
+    da = xr.DataArray(pid, coords=ds.profile_time.coords, dims=ds.profile_time.dims, name=name, attrs=attributes)
+    ds[name] = da
+
+    # add trajectory
+    attributes = dict(
+        cf_role='trajectory_id',
+        comment='A trajectory is a single deployment of a glider and may span multiple data files.',
+        ioos_category='Identifier',
+        long_name='Trajectory/Deployment Name'
+    )
+    name = 'trajectory'
+    da = xr.DataArray(np.repeat(ds.title, len(ds.time)).astype(object), coords=ds.profile_time.coords,
+                      dims=ds.profile_time.dims, name=name, attrs=attributes)
+    ds[name] = da
+
     # add instrument, platform, and constant attributes
     with open(inst) as json_file:
         instruments = json.load(json_file)
@@ -99,7 +129,14 @@ def main(fname):
         ds[key].attrs = values
 
     # add sensor calibration information to instrument_ph
-    ds['instrument_ph'].attrs['calibration_coefficients'] = f'pH sensor calibration coefficents: {phsensorcals}'
+    ph_cal_attrs = 'pH sensor calibration coefficents: '
+    for k, v in phsensorcals.items():
+        ph_cal_attrs += f'{k}: {v}, '
+
+    # format string to remove final comma-space
+    ph_cal_attrs = ph_cal_attrs[0:len(ph_cal_attrs)-2]
+
+    ds['instrument_ph'].attrs['calibration_coefficients'] = ph_cal_attrs
 
     # rename variables
     rename_dict = {'latitude': 'lat', 'longitude': 'lon',

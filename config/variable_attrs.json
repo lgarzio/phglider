@@ -110,7 +110,7 @@
         "long_name": "Chlorophyll a",
         "observation_type": "measured",
         "sensor": "sci_flbbcd_chlor_units",
-        "units": "ug/l"
+        "units": "ug L-1"
     },
     "ph_total": {
         "ancillary_variables": "pressure_interpolated salinity_interpolated temperature_interpolated pH_reference_voltage_raw",
