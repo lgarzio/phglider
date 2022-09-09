@@ -43,6 +43,7 @@ def main(args):
 
     # read cal file
     calfile = cf.find_calfile(deploy, args.sensor_sn)
+    print(calfile)
     with open(calfile) as json_file:
         cc = json.load(json_file)
 
