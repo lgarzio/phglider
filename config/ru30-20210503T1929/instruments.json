@@ -1,6 +1,5 @@
 {
     "platform": {
-        "_FillValue": -9999.0,
         "depth_rating": "200m",
 		"glider_type": "Teledyne Webb Research Slocum G2 glider",
 		"id": "ru30",
@@ -11,7 +10,6 @@
 		"wmo_id": "4801946"
     },
 	"instrument_ctd": {
-        "_FillValue": -9999.0,
         "calibration_date": "2020-02-12",
 		"comment": "Pumped",
 		"factory_calibrated": "2020-02-12",
@@ -22,7 +20,6 @@
 		"type": "instrument"
     },
     "instrument_ph": {
-        "_FillValue": -9999.0,
         "calibration_date": "2020-03-06",
 		"calibration_coefficients": " ",
 		"comment": "V2",
@@ -34,7 +31,6 @@
 		"type": "instrument"
     },
     "instrument_flbbcd": {
-        "_FillValue": -9999.0,
 		"calibration_date": "2017-02-24",
 		"comment": "Chlorophyll a, beta700nm, CDOM",
 		"factory_calibrated": "2017-02-24",
@@ -45,7 +41,6 @@
 		"type": "instrument"
     },
     "instrument_optode": {
-        "_FillValue": -9999.0,
         "calibration_date": "2019-09-25",
 		"factory_calibrated": "2019-09-25",
 		"long_name": "Oxygen Optode",
