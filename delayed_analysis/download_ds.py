@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 4/2/2021
-Last modified: 6/16/2022
+Last modified: 1/19/2023
 Download a user-specified pH glider netCDF dataset from RUCOOL's glider ERDDAP server and save to a local directory
 """
 
@@ -17,15 +17,15 @@ def flatten(lst):
 
 def main(deploy, sdir):
     os.makedirs(sdir, exist_ok=True)
-    ru_server = 'http://slocum-test.marine.rutgers.edu//erddap'
+    ru_server = 'http://slocum-data.marine.rutgers.edu//erddap'
 
     ds_vars = cf.get_dataset_variables(ru_server, deploy)
 
     glider_vars = [['latitude', 'longitude', 'depth', 'water_depth', 'profile_lat', 'profile_lon', 'profile_time',
-                   'conductivity', 'salinity', 'density', 'pressure', 'temperature']]
+                   'conductivity', 'salinity', 'density', 'pressure', 'temperature', 'trajectory']]
 
     search_str = ['_qartod_summary_flag', 'instrument_', 'ph_ref_voltage', 'oxygen_', 'chlorophyll_a',
-                  '_hysteresis_test']
+                  '_hysteresis_test', 'beta_700nm', 'cdom']
     for ss in search_str:
         append_vars = [x for x in ds_vars if ss in x]
         if search_str == 'chlorophyll_a':
