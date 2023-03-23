@@ -3,17 +3,19 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - pandas==1.2.3
-  - erddapy==0.9.0
-  - cartopy==0.18.0
-  - netcdf4==1.5.6
-  - pip==21.0.1
+  - pandas==1.5.0
+  - erddapy==1.2.1
+  - cartopy==0.21.0
+  - netcdf4==1.6.1
+  - pip==22.2.2
+  - dask==2022.9.1
   - cmocean==2.0
-  - numpy==1.20.1
-  - xarray==0.17.0
-  - scikit-learn==0.24.1
-  - geographiclib=1.52
-  - ioos_qc=2.0.1
+  - numpy==1.23.3
+  - xarray==0.19.0
+  - scikit-learn==1.1.2
+  - geographiclib==2.0
+  - ioos_qc==2.0.1
+  - gsw==3.6.16
   - pip:
-    - pyco2sys==1.7.1
+    - pyco2sys==1.8.1
     - seawater==3.3.4
