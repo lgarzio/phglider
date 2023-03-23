@@ -15,64 +15,6 @@ from sklearn.linear_model import LinearRegression
 import cmocean as cmo
 
 
-def attribute_mapping(varname):
-    """
-    Map new variable to old for attribute assignment
-    :param varname: variable name
-    :return: variable name from original dataset to use for attributes with additional relevant attributes
-    """
-    variable_mapping = dict(
-        pressure_interpolated=dict(
-            comment='linear interpolated pressure',
-            ancillary_variables='pressure'
-        ),
-        temperature_interpolated=dict(
-            comment='linear interpolated temperature',
-            ancillary_variables='temperature'
-        ),
-        salinity_interpolated=dict(
-            comment='linear interpolated salinity',
-            ancillary_variables='salinity'
-        )
-    )
-
-    return variable_mapping[varname]
-
-
-def assign_ph_attrs(varname):
-    """
-    Assign attributes for pH variables
-    :param varname: variable name
-    :return: attributes for pH variables
-    """
-    ph_attributes = dict(
-        f_p=dict(
-            observation_type='calculated',
-            comment='Polynomial evaluation of sensor pressure response polynomial coefficients (f6-f1) and pressure',
-            ancillary_variables='pressure_interpolated, polynomial_coefficients',
-            units='1'
-        ),
-        ph_total=dict(
-            observation_type='calculated',
-            comment='Calculated from instrument calibration coefficents, interpolated pressure, salinity, temperature, '
-                    'and measured reference voltage',
-            ancillary_variables='sbe41n_ph_ref_voltage pressure_interpolated temperature_interpolated '
-                                'salinity_interpolated f_p k0 k2',
-            units='1'
-        ),
-        ph_total_shifted=dict(
-            observation_type='calculated',
-            comment='Calculated from instrument calibration coefficents, interpolated pressure, salinity, temperature, '
-                    'and measured reference voltage shifted by values defined in sbe41n_ph_ref_voltage_optimal_shift',
-            ancillary_variables='sbe41n_ph_ref_voltage_shifted pressure_interpolated temperature_interpolated '
-                                'salinity_interpolated f_p k0 k2',
-            units='1'
-        )
-    )
-
-    return ph_attributes[varname]
-
-
 def calculate_ta(deployment, salinity):
     """
     Calculate Total Alkalinity from salinity using a linear relationship determined from in-situ water sampling data
@@ -249,14 +191,32 @@ def plot_vars_dac():
 
 
 def plot_vars_delayed():
-    plt_vars = {'temperature': {'cmap': cmo.cm.thermal, 'ttl': 'Temperature ({})'.format(r'$\rm ^oC$')},
+    plt_vars = {'temperature': {'cmap': cmo.cm.thermal, 'ttl': 'Raw Temperature ({})'.format(r'$\rm ^oC$')},
+                'temperature_combined': {'cmap': cmo.cm.thermal, 'ttl': 'Thermal Lag Adjusted Temperature ({})'.format(r'$\rm ^oC$')},
                 'salinity': {'cmap': cmo.cm.haline, 'ttl': 'Salinity'},
+                'salinity_combined': {'cmap': cmo.cm.haline, 'ttl': 'Thermal Lag Adjusted Salinity'},
                 'density': {'cmap': cmo.cm.dense, 'ttl': 'Density (kg m-3)'},
+                'density_combined': {'cmap': cmo.cm.dense, 'ttl': 'Thermal Lag Adjusted Density (kg m-3)'},
                 'chlorophyll_a': {'cmap': cmo.cm.algae, 'ttl': 'Chlorophyll ({}g/L)'.format(chr(956))},
                 'oxygen_concentration_shifted_mgL': {'cmap': cmo.cm.oxy, 'ttl': 'Oxygen (mg/L)', 'clims': [0, 350]},
                 'ph_total_shifted': {'cmap': cmo.cm.matter, 'ttl': 'pH'},
                 'saturation_aragonite': {'cmap': cmo.cm.matter, 'ttl': 'Aragonite Saturation State'},
                 'total_alkalinity': {'cmap': cmo.cm.matter, 'ttl': 'Total Alkalinity'}
+                }
+    return plt_vars
+
+
+def plot_vars_ncei():
+    plt_vars = {'conductivity': {'cmap': 'jet', 'ttl': 'Conductivity (S m-1)'},
+                'temperature': {'cmap': cmo.cm.thermal, 'ttl': 'Temperature ({})'.format(r'$\rm ^oC$')},
+                'salinity': {'cmap': cmo.cm.haline, 'ttl': 'Salinity'},
+                'chlorophyll_a': {'cmap': cmo.cm.algae, 'ttl': 'Chlorophyll ({}g/L)'.format(chr(956))},
+                'oxygen_concentration_corrected': {'cmap': cmo.cm.oxy, 'ttl': 'Oxygen (umol/L)'},
+                'oxygen_saturation_corrected': {'cmap': cmo.cm.oxy, 'ttl': 'Oxygen Saturation (percent)'},
+                'pH_reference_voltage_corrected': {'cmap': cmo.cm.matter, 'ttl': 'pH Reference Voltage'},
+                'pH_corrected': {'cmap': cmo.cm.matter, 'ttl': 'pH'},
+                'total_alkalinity': {'cmap': cmo.cm.matter, 'ttl': 'Total Alkalinity'},
+                'aragonite_saturation_state': {'cmap': cmo.cm.matter, 'ttl': 'Aragonite Saturation State'}
                 }
     return plt_vars
 
