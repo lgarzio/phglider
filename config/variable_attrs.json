@@ -11,139 +11,48 @@
         "valid_max": 2147483647,
         "valid_min": 0
     },
-    "pressure": {
-        "instrument": "instrument_ctd",
-        "long_name": "CTD Pressure",
-        "observation_type": "measured",
-        "positive": "down",
-        "precision": "2",
-        "reference_datum": "sea-surface",
-        "standard_name": "sea_water_pressure",
-        "units": "dbar",
-		"axis": "Z",
-        "valid_max": 2000,
-        "valid_min": 0
-    },
-    "pressure_interpolated": {
-        "ancillary_variables": "pressure",
-        "comment": "linear interpolated pressure used to calculate pH",
-        "instrument": "instrument_ctd",
-        "long_name": "CTD Pressure",
+    "profile_time": {
+		"axis": "T",
+		"comment": "Timestamp corresponding to the mid-point of the profile",
+        "ioos_category": "Time",
+        "long_name": "Profile Center Time",
         "observation_type": "calculated",
-        "positive": "down",
-        "precision": "2",
-        "reference_datum": "sea-surface",
-        "standard_name": "sea_water_pressure",
-        "units": "dbar",
-		"axis": "Z",
-        "valid_max": 2000,
-        "valid_min": 0
+		"processing_level": 2,
+		"standard_name": "time",
+		"time_origin": "01-JAN-1970 00:00:00",
+		"time_precision": "1970-01-01T00:00:00.00Z",
+		"valid_max": 2147483647,
+		"valid_min": 0
     },
-    "depth": {
-        "comment": "Calculated from llat_pressure and llat_latitude using gsw.z_from_p",
-        "instrument": "instrument_ctd",
-        "long_name": "CTD Depth",
+    "profile_lon": {
+		"axis": "X",
+		"comment": "Value is interpolated to provide an estimate of the longitude at the mid-point of the profile",
+        "coordinate_reference_frame": "urn:ogc:crs:EPSG::4326",
+        "long_name": "Profile Center Longitude",
         "observation_type": "calculated",
-        "positive": "down",
-        "precision": "2",
-        "reference_datum": "sea-surface",
-        "units": "meters",
-		"axis": "Z",
-        "valid_max": 2000,
-        "valid_min": 0
+		"precision": 5,
+		"processing_level": 2,
+		"reference": "WGS84",
+		"standard_name": "longitude",
+		"units": "degree_east",
+		"axis": "X",
+		"valid_max": 180.0,
+		"valid_min": -180.0
     },
-    "temperature": {
-        "instrument": "instrument_ctd",
-        "long_name": "Temperature",
-        "observation_type": "measured",
-        "standard_name": "sea_water_temperature",
-        "units": "Celsius",
-        "valid_max": 40.0,
-        "valid_min": -5.0
-    },
-    "temperature_interpolated": {
-		"comment": "linear interpolated temperature used to calculate pH",
-        "ancillary_variables": "temperature",
-        "instrument": "instrument_ctd",
-        "long_name": "Temperature",
+    "profile_lat": {
+		"axis": "Y",
+		"comment": "Value is interpolated to provide an estimate of the latitude at the mid-point of the profile",
+        "coordinate_reference_frame": "urn:ogc:crs:EPSG::4326",
+        "long_name": "Profile Center Latitude",
         "observation_type": "calculated",
-        "standard_name": "sea_water_temperature",
-        "units": "Celsius",
-        "valid_max": 40.0,
-        "valid_min": -5.0
-    },
-    "salinity": {
-        "comment": "Practical salinity calculated from conductivity, temperature, and pressure using the Gibbs gsw SP_from_C function.",
-		"ancillary_variables": "conductivity temperature pressure",
-        "instrument": "instrument_ctd",
-        "long_name": "Salinity",
-        "observation_type": "calculated",
-        "standard_name": "sea_water_practical_salinity",
-        "units": "1",
-        "valid_max": 40.0,
-        "valid_min": 0.0
-    },
-    "salinity_interpolated": {
-		"comment": "linear interpolated salinity used to calculate pH",
-        "ancillary_variables": "salinity",
-        "instrument": "instrument_ctd",
-        "long_name": "Salinity",
-        "observation_type": "calculated",
-        "standard_name": "sea_water_practical_salinity",
-        "units": "1",
-        "valid_max": 40.0,
-        "valid_min": 0.0
-    },
-    "density": {
-		"comment": "Density calculated from temperature, practical salinity, pressure, latitude, and longitude using Gibbs gsw SA_from_SP, CT_from_t, and rho functions.",
-        "ancillary_variables": "temperature pressure salinity lat lon",
-        "instrument": "instrument_ctd",
-        "long_name": "Density",
-        "observation_type": "calculated",
-        "standard_name": "sea_water_density",
-        "units": "kg m-3",
-        "valid_max": 1015.0,
-        "valid_min": 1040.0
-    },
-    "chlorophyll_a": {
-        "instrument": "instrument_flbbcd",
-        "long_name": "Chlorophyll a",
-        "observation_type": "measured",
-        "sensor": "sci_flbbcd_chlor_units",
-        "units": "ug L-1"
-    },
-    "ph_total": {
-        "ancillary_variables": "pressure_interpolated salinity_interpolated temperature_interpolated pH_reference_voltage_raw",
-        "observation_type": "calculated",
-        "comment": "Calculated from sensor calibration coefficents, interpolated pressure, salinity, temperature, and measured reference voltage.",
-        "source_sensor": "sci_sbe41n_ph_ref_voltage",
-		"standard_name": "sea_water_ph_reported_on_total_scale",
-		"units": "1",
-        "valid_max": 14,
-        "valid_min": 0
-    },
-    "ph_total_shifted": {
-        "ancillary_variables": "pressure_interpolated salinity_interpolated temperature_interpolated pH_reference_voltage_corrected",
-        "observation_type": "calculated",
-        "comment": "Calculated from sensor calibration coefficents, interpolated pressure, salinity, temperature, and measured reference voltage shifted by an optimal time shift calculated by glider segment in order to minimize separation between glider down and upcasts.",
-        "source_sensor": "sci_sbe41n_ph_ref_voltage",
-		"standard_name": "sea_water_ph_reported_on_total_scale",
-		"units": "1",
-        "valid_max": 14,
-        "valid_min": 0
-    },
-    "total_alkalinity": {
-        "ancillary_variables": "salinity",
-        "observation_type": "calculated",
-        "long_name": "Total Alkalinity",
-		"units": "micromoles kg-1"
-    },
-    "aragonite_saturation_state": {
-        "ancillary_variables": "pressure_interpolated temperature_interpolated salinity_interpolated pH_corrected total_alkalinity",
-        "observation_type": "calculated",
-        "long_name": "Aragonite Saturation State",
-		"units": "1",
-        "comment": "Calculated using PyCO2SYS (Humphreys et al. (2020) doi:10.5281/zenodo.3744275, Lewis and Wallace (1998)) with inputs of corrected pH on the total scale, total alkalinity, in situ salinity_interpolated, in situ temperature_interpolated, in situ pressure_interpolated, K1 and K2 dissociation constants defined by Merbach and refit by Dickson and Millero, KSO4 dissociation constant of Dickson, KHF dissociation constant of Perez and Fraga, and borate-to-salinity ratio of Uppstrom (1979)"
+		"precision": 5,
+		"processing_level": 2,
+		"reference": "WGS84",
+		"standard_name": "latitude",
+		"units": "degree_north",
+		"axis": "Y",
+		"valid_max": 90.0,
+		"valid_min": -90.0
     },
     "latitude": {
         "comment": "m_gps_lat converted to decimal degrees and interpolated",
@@ -167,14 +76,249 @@
         "valid_max": 180.0,
         "valid_min": -180.0
     },
-    "conductivity": {
+    "pressure": {
         "instrument": "instrument_ctd",
+        "long_name": "CTD Pressure",
+        "observation_type": "measured",
+        "positive": "down",
+        "precision": "2",
+        "reference_datum": "sea-surface",
+        "standard_name": "sea_water_pressure",
+        "units": "dbar",
+		"axis": "Z",
+        "valid_max": 2000,
+        "valid_min": 0
+    },
+    "pressure_interpolated": {
+        "ancillary_variables": "pressure",
+        "comment": "linear interpolated pressure used to calculate pH",
+        "instrument": "instrument_ctd",
+        "long_name": "Interpolated CTD Pressure",
+        "observation_type": "calculated",
+        "positive": "down",
+        "precision": "2",
+        "reference_datum": "sea-surface",
+        "standard_name": "sea_water_pressure",
+        "units": "dbar",
+		"axis": "Z",
+        "valid_max": 2000,
+        "valid_min": 0
+    },
+    "depth": {
+        "comment": "Calculated from llat_pressure and llat_latitude using gsw.z_from_p",
+        "instrument": "instrument_ctd",
+        "long_name": "CTD Depth",
+        "observation_type": "calculated",
+        "positive": "down",
+        "precision": "2",
+        "reference_datum": "sea-surface",
+        "units": "meters",
+		"axis": "Z",
+        "valid_max": 2000,
+        "valid_min": 0
+    },
+    "conductivity": {
+        "comment": "Suspect/failed IOOS QC values, and values flagged by a CTD hysteresis test have been removed.",
+		"instrument": "instrument_ctd",
         "long_name": "Conductivity",
         "observation_type": "measured",
         "standard_name": "sea_water_electrical_conductivity",
         "units": "S m-1",
         "valid_max": 10,
         "valid_min": 0
+    },
+	"conductivity_lag_shifted": {
+        "comment": "Conductivity corrected for thermal lag, when appropriate",
+		"ancillary_variables": "conductivity",
+		"instrument": "instrument_ctd",
+        "long_name": "Conductivity - Thermal Lag Adjusted",
+        "standard_name": "sea_water_electrical_conductivity",
+        "units": "S m-1",
+        "valid_max": 10,
+        "valid_min": 0
+    },
+    "temperature": {
+        "comment": "Suspect/failed IOOS QC values, and values flagged by a CTD hysteresis test have been removed.",
+		"instrument": "instrument_ctd",
+        "long_name": "Temperature",
+        "observation_type": "measured",
+        "standard_name": "sea_water_temperature",
+        "units": "Celsius",
+        "valid_max": 40.0,
+        "valid_min": -5.0
+    },
+	"temperature_lag_shifted": {
+        "comment": "Temperature corrected for thermal lag, when appropriate",
+		"ancillary_variables": "temperature",
+		"instrument": "instrument_ctd",
+        "long_name": "Temperature - Thermal Lag Adjusted",
+        "standard_name": "sea_water_temperature",
+        "units": "Celsius",
+        "valid_max": 40.0,
+        "valid_min": -5.0
+    },
+	"temperature_combined": {
+        "comment": "Combined temperature variable, using the thermal lag shifted temperature when available, and raw temperature when a given profile was not adjusted for thermal lag",
+		"ancillary_variables": "temperature_lag_shifted temperature",
+		"instrument": "instrument_ctd",
+        "long_name": "Temperature - Thermal Lag Adjusted",
+        "standard_name": "sea_water_temperature",
+        "units": "Celsius",
+        "valid_max": 40.0,
+        "valid_min": -5.0
+    },
+    "temperature_interpolated": {
+		"comment": "linear interpolated temperature used to calculate pH",
+        "ancillary_variables": "temperature_combined",
+        "instrument": "instrument_ctd",
+        "long_name": "Interpolated Temperature",
+        "observation_type": "calculated",
+        "standard_name": "sea_water_temperature",
+        "units": "Celsius",
+        "valid_max": 40.0,
+        "valid_min": -5.0
+    },
+    "salinity": {
+        "comment": "Practical salinity calculated from conductivity, temperature, and pressure using the Gibbs gsw SP_from_C function. Suspect/failed IOOS QC values, and values flagged by a CTD hysteresis test have been removed.",
+		"ancillary_variables": "conductivity temperature pressure",
+        "instrument": "instrument_ctd",
+        "long_name": "Salinity",
+        "observation_type": "calculated",
+        "standard_name": "sea_water_practical_salinity",
+        "units": "1",
+        "valid_max": 40.0,
+        "valid_min": 0.0
+    },
+	"salinity_lag_shifted": {
+        "comment": "Salinity corrected for thermal lag, when appropriate. Calculated using the gsw.SP_from_C function.",
+		"ancillary_variables": "conductivity temperature pressure",
+        "instrument": "instrument_ctd",
+        "long_name": "Salinity - Thermal Lag Adjusted",
+        "observation_type": "calculated",
+        "standard_name": "sea_water_practical_salinity",
+        "units": "1",
+        "valid_max": 40.0,
+        "valid_min": 0.0
+    },
+	"salinity_combined": {
+        "comment": "Combined salinity variable, using the thermal lag shifted salinity when available, and raw salinity when a given profile was not adjusted for thermal lag",
+		"ancillary_variables": "salinity_lag_shifted salinity",
+        "instrument": "instrument_ctd",
+        "long_name": "Salinity - Thermal Lag Adjusted",
+        "observation_type": "calculated",
+        "standard_name": "sea_water_practical_salinity",
+        "units": "1",
+        "valid_max": 40.0,
+        "valid_min": 0.0
+    },
+    "salinity_interpolated": {
+		"comment": "linear interpolated salinity used to calculate pH",
+        "ancillary_variables": "salinity_combined",
+        "instrument": "instrument_ctd",
+        "long_name": "Interpolated Salinity",
+        "observation_type": "calculated",
+        "standard_name": "sea_water_practical_salinity",
+        "units": "1",
+        "valid_max": 40.0,
+        "valid_min": 0.0
+    },
+    "density": {
+		"comment": "Density calculated from temperature, practical salinity, pressure, latitude, and longitude using Gibbs gsw SA_from_SP, CT_from_t, and rho functions. Suspect/failed IOOS QC values, and values flagged by a CTD hysteresis test have been removed.",
+        "ancillary_variables": "temperature pressure salinity lat lon",
+        "instrument": "instrument_ctd",
+        "long_name": "Density",
+        "observation_type": "calculated",
+        "standard_name": "sea_water_density",
+        "units": "kg m-3",
+        "valid_max": 1015.0,
+        "valid_min": 1040.0
+    },
+	"density_lag_shifted": {
+        "comment": "Density corrected for thermal lag, when appropriate. Calculated using the gsw.rho function.",
+		"ancillary_variables": "salinity temperature pressure",
+        "instrument": "instrument_ctd",
+        "long_name": "Density - Thermal Lag Adjusted",
+        "observation_type": "calculated",
+        "standard_name": "sea_water_density",
+        "units": "kg m-3",
+        "valid_max": 1015.0,
+        "valid_min": 1040.0
+    },
+	"density_combined": {
+        "comment": "Combined density variable, using the thermal lag shifted density when available, and raw density when a given profile was not adjusted for thermal lag",
+		"ancillary_variables": "density_lag_shifted density",
+        "instrument": "instrument_ctd",
+        "long_name": "Density - Thermal Lag Adjusted",
+        "observation_type": "calculated",
+        "standard_name": "sea_water_density",
+        "units": "kg m-3",
+        "valid_max": 1015.0,
+        "valid_min": 1040.0
+	},
+    "chlorophyll_a": {
+        "instrument": "instrument_flbbcd",
+        "long_name": "Chlorophyll a",
+        "observation_type": "measured",
+        "sensor": "sci_flbbcd_chlor_units",
+        "units": "ug L-1",
+		"ioos_category": "Ocean Color",
+		"standard_name": "mass_concentration_of_chlorophyll_a_in_sea_water"
+    },
+    "beta_700nm": {
+        "instrument": "instrument_flbbcd",
+        "long_name": "Beta 700nm at 117 degrees",
+		"measurement_angle": "117 degrees",
+		"measurement_wavelength": "700nm",
+        "observation_type": "measured",
+        "sensor": "sci_flbbcd_bb_units",
+        "units": "m-1 sr-1",
+		"ioos_category": "Ocean Color"
+    },
+    "cdom": {
+        "instrument": "instrument_flbbcd",
+        "long_name": "CDOM",
+		"measurement_angle": "117 degrees",
+		"measurement_wavelength": "700nm",
+        "observation_type": "measured",
+        "sensor": "sci_flbbcd_cdom_units",
+        "units": "ppb",
+		"ioos_category": "Ocean Color",
+		"standard_name": "concentration_of_colored_dissolved_organic_matter_in_sea_water_expressed_as_equivalent_mass_fraction_of_quinine_sulfate_dihydrate"
+    },
+    "ph_total": {
+        "ancillary_variables": "pressure_interpolated salinity_interpolated temperature_interpolated pH_reference_voltage_raw",
+        "observation_type": "calculated",
+        "comment": "Calculated from sensor calibration coefficents, interpolated pressure, salinity, temperature (adjusted for thermal lag) and measured reference voltage.",
+        "source_sensor": "sci_sbe41n_ph_ref_voltage",
+		"standard_name": "sea_water_ph_reported_on_total_scale",
+		"long_name": "pH",
+		"units": "1",
+        "valid_max": 14,
+        "valid_min": 0
+    },
+    "ph_total_shifted": {
+        "ancillary_variables": "pressure_interpolated salinity_interpolated temperature_interpolated pH_reference_voltage_corrected",
+        "observation_type": "calculated",
+        "comment": "Calculated from sensor calibration coefficents, interpolated pressure, salinity, temperature (adjusted for thermal lag) and measured reference voltage shifted by an optimal time shift calculated by glider segment in order to minimize separation between glider down and upcasts.",
+        "source_sensor": "sci_sbe41n_ph_ref_voltage",
+		"standard_name": "sea_water_ph_reported_on_total_scale",
+		"long_name": "pH",
+		"units": "1",
+        "valid_max": 14,
+        "valid_min": 0
+    },
+    "total_alkalinity": {
+        "ancillary_variables": "salinity",
+        "observation_type": "calculated",
+        "long_name": "Total Alkalinity",
+		"units": "micromoles kg-1"
+    },
+    "aragonite_saturation_state": {
+        "ancillary_variables": "pressure_interpolated temperature_interpolated salinity_interpolated pH_corrected total_alkalinity",
+        "observation_type": "calculated",
+        "long_name": "Aragonite Saturation State",
+		"units": "1",
+        "comment": "Calculated using PyCO2SYS (Humphreys et al. (2020) doi:10.5281/zenodo.3744275, Lewis and Wallace (1998)) with inputs of corrected pH on the total scale, total alkalinity, in situ salinity_interpolated, in situ temperature_interpolated, in situ pressure_interpolated, K1 and K2 dissociation constants defined by Merbach and refit by Dickson and Millero, KSO4 dissociation constant of Dickson, KHF dissociation constant of Perez and Fraga, and borate-to-salinity ratio of Uppstrom (1979)"
     },
     "oxygen_saturation": {
         "instrument": "instrument_optode",
@@ -221,48 +365,5 @@
         "instrument": "instrument_ph",
         "long_name": "sbe41n pH reference voltage",
         "units": "volts"
-    },
-    "profile_time": {
-		"axis": "T",
-		"comment": "Timestamp corresponding to the mid-point of the profile",
-        "ioos_category": "Time",
-        "long_name": "Profile Center Time",
-        "observation_type": "calculated",
-		"processing_level": 2,
-		"standard_name": "time",
-		"time_origin": "01-JAN-1970 00:00:00",
-		"time_precision": "1970-01-01T00:00:00.00Z",
-		"valid_max": 2147483647,
-		"valid_min": 0
-    },
-    "profile_lon": {
-		"axis": "X",
-		"comment": "Value is interpolated to provide an estimate of the longitude at the mid-point of the profile",
-        "coordinate_reference_frame": "urn:ogc:crs:EPSG::4326",
-        "long_name": "Profile Center Longitude",
-        "observation_type": "calculated",
-		"precision": 5,
-		"processing_level": 2,
-		"reference": "WGS84",
-		"standard_name": "longitude",
-		"units": "degree_east",
-		"axis": "X",
-		"valid_max": 180.0,
-		"valid_min": -180.0
-    },
-    "profile_lat": {
-		"axis": "Y",
-		"comment": "Value is interpolated to provide an estimate of the latitude at the mid-point of the profile",
-        "coordinate_reference_frame": "urn:ogc:crs:EPSG::4326",
-        "long_name": "Profile Center Latitude",
-        "observation_type": "calculated",
-		"precision": 5,
-		"processing_level": 2,
-		"reference": "WGS84",
-		"standard_name": "latitude",
-		"units": "degree_north",
-		"axis": "Y",
-		"valid_max": 90.0,
-		"valid_min": -90.0
     }
 }

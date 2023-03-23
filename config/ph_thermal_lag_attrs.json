@@ -1,0 +1,74 @@
+{
+	"conductivity_lag_shifted": {
+        "comment": "Conductivity corrected for thermal lag, when appropriate",
+		"ancillary_variables": "conductivity"
+    },
+	"temperature_lag_shifted": {
+        "comment": "Temperature corrected for thermal lag, when appropriate",
+		"ancillary_variables": "temperature"
+    },
+	"salinity_lag_shifted": {
+        "comment": "Salinity corrected for thermal lag, when appropriate. Calculated using the gsw.SP_from_C function.",
+		"ancillary_variables": "conductivity temperature pressure"
+    },
+	"density_lag_shifted": {
+        "comment": "Density corrected for thermal lag, when appropriate. Calculated using the gsw.rho function.",
+		"ancillary_variables": "salinity temperature pressure"
+    },
+	"temperature_combined": {
+        "comment": "Combined temperature variable, using the thermal lag shifted temperature when available, and raw temperature when a given profile was not adjusted for thermal lag",
+		"ancillary_variables": "temperature_lag_shifted temperature"
+    },
+	"salinity_combined": {
+        "comment": "Combined salinity variable, using the thermal lag shifted salinity when available, and raw salinity when a given profile was not adjusted for thermal lag",
+		"ancillary_variables": "salinity_lag_shifted salinity"
+    },
+	"density_combined": {
+        "comment": "Combined density variable, using the thermal lag shifted density when available, and raw density when a given profile was not adjusted for thermal lag",
+		"ancillary_variables": "density_lag_shifted density"
+    },
+    "pressure_interpolated": {
+        "ancillary_variables": "pressure",
+        "comment": "Linear interpolated pressure used to calculate pH"
+    },
+    "temperature_interpolated": {
+        "ancillary_variables": "temperature_combined",
+        "comment": "Linear interpolated temperature used to calculate pH"
+    },
+    "salinity_interpolated": {
+        "ancillary_variables": "salinity_combined",
+        "comment": "Linear interpolated salinity used to calculate pH"
+    },
+    "temperature_interpolated_notl": {
+        "ancillary_variables": "temperature",
+        "comment": "Linear interpolated temperature (no thermal lag adjustment applied)"
+    },
+    "salinity_interpolated_notl": {
+        "ancillary_variables": "salinity",
+        "comment": "Linear interpolated salinity (no thermal lag adjustment applied)"
+    },
+    "f_p": {
+		"observation_type": "calculated",
+        "ancillary_variables": "pressure_interpolated, polynomial_coefficients",
+        "comment": "Polynomial evaluation of sensor pressure response polynomial coefficients (f6-f1) and pressure",
+		"units": "1"
+    },
+    "ph_total": {
+		"observation_type": "calculated",
+        "ancillary_variables": "sbe41n_ph_ref_voltage pressure_interpolated temperature_interpolated salinity_interpolated f_p k0 k2",
+        "comment": "Calculated from instrument calibration coefficents, interpolated pressure, salinity, temperature (adjusted for thermal lag) and measured reference voltage",
+		"units": "1"
+    },
+    "ph_total_shifted": {
+		"observation_type": "calculated",
+        "ancillary_variables": "sbe41n_ph_ref_voltage_shifted pressure_interpolated temperature_interpolated salinity_interpolated f_p k0 k2",
+        "comment": "Calculated from instrument calibration coefficents, interpolated pressure, salinity, temperature (adjusted for thermal lag) and measured reference voltage shifted by values defined in sbe41n_ph_ref_voltage_optimal_shift",
+		"units": "1"
+    },
+    "ph_total_shifted_notl": {
+		"observation_type": "calculated",
+        "ancillary_variables": "sbe41n_ph_ref_voltage_shifted pressure_interpolated temperature_interpolated_notl salinity_interpolated_notl f_p k0 k2",
+        "comment": "Calculated from instrument calibration coefficents, interpolated pressure, salinity, temperature (not adjusted for thermal lag) and measured reference voltage shifted by values defined in sbe41n_ph_ref_voltage_optimal_shift",
+		"units": "1"
+    }
+}

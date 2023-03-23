@@ -1,0 +1,54 @@
+{
+    "platform": {
+        "depth_rating": "1000m",
+		"glider_type": "Teledyne Webb Research Slocum G2 glider",
+		"id": "ru26d",
+		"instrument": "instrument_ctd,instrument_pH,instrument_flbbcdslc,instrument_optode",
+		"long_name": "Slocum Glider ru26d",
+		"os_version": "8.3",
+		"type": "platform",
+		"wmo_id": "4802966"
+    },
+	"instrument_ctd": {
+        "calibration_date": "2021-09-24",
+		"comment": "Pumped",
+		"factory_calibrated": "2021-09-24",
+		"long_name": "Conductivity, Temperature, Depth (CTD) Sensor",
+		"make_model": "Sea-Bird GPCTD",
+		"platform": "platform",
+		"serial_number": "9416",
+		"type": "instrument"
+    },
+    "instrument_ph": {
+        "calibration_date": "2021-10-10",
+		"calibration_coefficients": " ",
+		"comment": "V2",
+		"factory_calibrated": "2021-10-10",
+		"long_name": "Deep ISFET Ocean pH Sensor",
+		"make_model": "Sea-Bird Deep ISFET Ocean pH Sensor",
+		"platform": "platform",
+		"serial_number": "10344",
+		"type": "instrument"
+    },
+    "instrument_flbbcdslc": {
+		"calibration_date": "2021-08-31",
+		"comment": "Chlorophyll a,beta700nm,CDOM",
+		"factory_calibrated": "2021-08-31",
+		"long_name": "ECO Triplet Puck",
+		"make_model": "Sea-Bird ECO Triplet flbbcdslc",
+		"platform": "platform",
+		"serial_number": "4662",
+		"type": "instrument"
+    },
+    "instrument_optode": {
+        "calibration_date": "2019-03-31",
+		"comment": "In-house check performed on 2022-06-15",
+		"factory_calibrated": "2019-03-31",
+		"long_name": "Oxygen Optode",
+		"make_model": "Aanderaa Oxygen Optode 4831",
+		"platform": "platform",
+		"serial_number": "644",
+		"type": "instrument",
+		"user_calibrated": "2022-06-15"
+    }
+}
