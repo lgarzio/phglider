@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 4/28/2021
-Last modified: 8/31/2022
+Last modified: 3/23/2023
 Process final glider dataset to upload to the IOOS glider DAC (https://gliders.ioos.us/) and
 NCEI OA data portal (https://www.ncei.noaa.gov/access/ocean-carbon-acidification-data-system-portal/)
 Modified from code written by Leila Belabbassi.
@@ -45,14 +45,23 @@ def main(fname):
     os.makedirs(savedir, exist_ok=True)
 
     deploy = '-'.join(fname.split('/')[-1].split('-')[0:2])
-    proc_vars = ['time', 'profile_time', 'profile_lon', 'profile_lat', 'latitude', 'longitude', 'depth', 'pressure',
-                 'temperature', 'density', 'salinity', 'chlorophyll_a', 'total_alkalinity',
-                 'aragonite_saturation_state', 'conductivity',
-                 'sbe41n_ph_ref_voltage', 'sbe41n_ph_ref_voltage_shifted', 'ph_total', 'ph_total_shifted',
-                 'oxygen_concentration', 'oxygen_concentration_shifted', 'oxygen_saturation',
-                 'oxygen_saturation_shifted', 'pressure_interpolated', 'temperature_interpolated',
-                 'salinity_interpolated']
     ds = xr.open_dataset(fname)
+
+    proc_vars = ['time', 'profile_time', 'profile_lon', 'profile_lat', 'latitude', 'longitude', 'depth', 'pressure',
+                 'temperature', 'density', 'salinity', 'conductivity',
+                 'sbe41n_ph_ref_voltage', 'sbe41n_ph_ref_voltage_shifted', 'ph_total', 'ph_total_shifted',
+                 'pressure_interpolated', 'temperature_interpolated', 'salinity_interpolated']
+
+    search_vars = ['chlorophyll_a', 'sci_flntu_chlor_units', 'total_alkalinity', 'aragonite_saturation_state',
+                   'beta_700nm', 'cdom', 'oxygen_concentration', 'oxygen_concentration_shifted', 'oxygen_saturation',
+                   'oxygen_saturation_shifted', 'conductivity_lag_shifted', 'salinity_lag_shifted',
+                   'temperature_lag_shifted', 'density_lag_shifted', 'temperature_combined', 'salinity_combined',
+                   'density_combined']
+    for sv in search_vars:
+        if sv in ds.data_vars:
+            proc_vars.append(sv)
+
+    proc_vars = list(np.unique(proc_vars))
 
     # get the pH sensor calibration coefficients
     phsensorcals = ast.literal_eval(ds.polynomial_coefficients.calibration_coefficients)
@@ -63,7 +72,10 @@ def main(fname):
         var_attrs = json.load(json_file)
 
     # add additional attribute information to total_alkalinity
-    var_attrs['total_alkalinity']['comment'] = ds.total_alkalinity.comment
+    try:
+        var_attrs['total_alkalinity']['comment'] = ds.total_alkalinity.comment
+    except AttributeError:
+        print('no TA in file')
 
     # build a dictionary with the data and appropriate variable attributes
     data_dict = {'data_vars': {}}

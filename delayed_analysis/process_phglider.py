@@ -2,26 +2,27 @@
 
 """
 Author: Lori Garzio on 3/28/2022
-Last modified: 7/26/2022
+Last modified: 3/23/2023
 Process delayed-mode pH glider data.
 1. Apply QARTOD QC flags (downloaded in the files) to CTD and DO data (set data flagged as 3/SUSPECT and 4/FAIL to nan).
 2. Set profiles flagged as 3/SUSPECT and 4/FAIL from CTD hysteresis tests to nan (conductivity, temperature,
 salinity and density).
 3. Run location QARTOD test.
 4. Convert pH voltages of 0.0 to nan.
-5. Interpolate (method=linear) pressure and remove data where pressure <1 dbar.
-6. Interpolate (method=linear) temperature and salinity.
-7. Remove interpolated data for profiles that failed hysteresis tests.
-8. Calculate pH from original and corrected voltages and interpolated CTD data.
-9. Calculate Total Alkalinity from interpolated salinity using a linear relationship determined from in-situ water
+5. Apply CTD thermal lag correction.
+6. Interpolate (method=linear) pressure.
+7. Interpolate (method=linear) temperature and salinity.
+8. Remove interpolated data for profiles that failed hysteresis tests.
+9. Calculate pH from original and corrected voltages and interpolated CTD data.
+10. Calculate Total Alkalinity from interpolated salinity using a linear relationship determined from in-situ water
 sampling.
-10. Run ioos_qc gross range test on additional variables defined in the gross_range.yml config file (e.g. calculated pH,
+11. Run ioos_qc gross range test on additional variables defined in the gross_range.yml config file (e.g. calculated pH,
 chlorophyll-a) and apply test results to data.
-11. Run ioos_qc spike test on pH and corrected pH, and apply test results to data.
-12. TODO Run QARTOD rate of change test on pH and corrected pH (not implemented)
-13. Calculate CO2SYS variables using TA, corrected pH, interpolated salinity, interpolated temperature, interpolated
+12. Run ioos_qc spike test on pH and corrected pH, and apply test results to data.
+13. TODO Run QARTOD rate of change test on pH and corrected pH (not implemented)
+14. Calculate CO2SYS variables using TA, corrected pH, interpolated salinity, interpolated temperature, interpolated
 pressure.
-14. Convert oxygen concentration to mg/L.
+15. Convert oxygen concentration to mg/L.
 """
 
 import os
@@ -37,6 +38,7 @@ from ioos_qc.utils import load_config_as_dict as loadconfig
 import functions.common as cf
 import functions.phcalc as phcalc
 import functions.qc as fqc
+import thermal_lag.ctd_thermal_lag_correction as ctd_thermal_lag
 pd.set_option('display.width', 320, "display.max_columns", 10)  # for display in pycharm console
 
 
@@ -89,6 +91,19 @@ def assign_dissolved_oxygen_attrs(array, original_varname):
     return attrs
 
 
+def combine_data(var1, var2):
+    """
+    Combine two datasets. var2 is added only where var1=nan
+    :param var1: numpy array
+    :param var2: numpy array
+    """
+    var_combined = var1
+    nan_idx = np.isnan(var_combined)
+    var_combined[nan_idx] = var2[nan_idx]
+
+    return var_combined
+
+
 def delete_attr(da):
     """
     Delete these local attributes because they are no longer valid with QC'd dataset
@@ -110,6 +125,7 @@ def main(coord_lims, configdir, fname, method):
     ds = ds.drop_vars(names=['profile_id', 'rowSize'])
     ds = ds.swap_dims({'obs': 'time'})
     ds = ds.sortby(ds.time)
+    savefile = f'{fname.split(".nc")[0]}_qc.nc'
 
     # apply QARTOD QC to all variables except pressure
     qcvars = [x for x in list(ds.data_vars) if '_qartod_summary_flag' in x]
@@ -155,26 +171,34 @@ def main(coord_lims, configdir, fname, method):
     with open(calfile) as json_file:
         cc = json.load(json_file)
 
+    # read file containing attributes for additional variables added to the dataset (pH and thermal lag variables)
+    va = '/Users/garzio/Documents/repo/lgarzio/phglider/config/ph_thermal_lag_attrs.json'
+    with open(va) as json_file:
+        var_attrs = json.load(json_file)
+
     # convert to dataframe and drop duplicated timestamps
     df = ds.to_dataframe()
 
-    # interpolate pressure, and drop all data where pressure < 1 dbar for final processed dataset only
-    df['pressure_interpolated'] = df['pressure'].interpolate(method='linear', limit_direction='both')
-    if method == 'final':
-        df = df[df['pressure_interpolated'] >= 1].copy()
-        savefile = f'{fname.split(".nc")[0]}_qc.nc'
-    else:
-        savefile = f'{fname.split(".nc")[0]}_watersampling_qc.nc'
-
     # drop duplicated timestamps
-    df = df[~df.index.duplicated(keep='first')]
+    df = df.loc[~df.index.duplicated(keep='first')]
 
-    # interpolate pressure again, this time limiting the amount of interpolation
+    # apply CTD thermal lag adjustment
+    df = ctd_thermal_lag.apply_thermal_lag(df)
+
+    # rename thermal lag columns
+    df.rename(columns={'salt_outside': 'salinity_lag_shifted',
+                       'ctemp_outside': 'temperature_lag_shifted',
+                       'rho_outside': 'density_lag_shifted'}, inplace=True)
+
+    # generate combined data arrays - use thermal lag corrected data when available, otherwise use raw data
+    df['temperature_combined'] = combine_data(np.array(df['temperature_lag_shifted']), np.array(df['temperature']))
+    df['salinity_combined'] = combine_data(np.array(df['salinity_lag_shifted']), np.array(df['salinity']))
+    df['density_combined'] = combine_data(np.array(df['density_lag_shifted']), np.array(df['density']))
+
+    # interpolate pressure temperature and salinity (needed to calculate pH)
     df['pressure_interpolated'] = df['pressure'].interpolate(method='linear', limit_direction='both', limit=2)
-
-    # interpolate temperature and salinity (needed to calculate pH)
-    df['temperature_interpolated'] = df['temperature'].interpolate(method='linear', limit_direction='both', limit=2)
-    df['salinity_interpolated'] = df['salinity'].interpolate(method='linear', limit_direction='both', limit=2)
+    df['temperature_interpolated'] = df['temperature_combined'].interpolate(method='linear', limit_direction='both', limit=2)
+    df['salinity_interpolated'] = df['salinity_combined'].interpolate(method='linear', limit_direction='both', limit=2)
 
     # if entire profiles were removed due to the CTD hysteresis tests, make sure the interpolated values are nan
     hysteresis_tests = ['conductivity_hysteresis_test', 'temperature_hysteresis_test']
@@ -185,7 +209,7 @@ def main(coord_lims, configdir, fname, method):
             df.loc[ht_fail, col] = np.nan
 
     # remove data where the pressure QARTOD QC flag value = 4/FAIL
-    df = df[df.pressure_qartod_summary_flag != 4]
+    df = df.loc[df.pressure_qartod_summary_flag != 4].copy()
 
     # calculate pH and add to dataframe
     df['f_p'] = np.polyval([cc['f6'], cc['f5'], cc['f4'], cc['f3'], cc['f2'], cc['f1'], 0], df.pressure_interpolated)
@@ -197,6 +221,21 @@ def main(coord_lims, configdir, fname, method):
                                   df.temperature_interpolated, df.salinity_interpolated, cc['k0'], cc['k2'], df.f_p)
     df['ph_total_shifted'] = phtot
 
+    # calculate pH shifted without the thermal lag applied
+    df['temperature_interpolated_notl'] = df['temperature'].interpolate(method='linear', limit_direction='both', limit=2)
+    df['salinity_interpolated_notl'] = df['salinity'].interpolate(method='linear', limit_direction='both', limit=2)
+
+    phfree, phtot = phcalc.phcalc(df.sbe41n_ph_ref_voltage_shifted, df.pressure_interpolated,
+                                  df.temperature_interpolated_notl, df.salinity_interpolated_notl, cc['k0'], cc['k2'], df.f_p)
+    df['ph_total_shifted_notl'] = phtot
+
+    # there's a lot of noise in pH at the surface, so set pH values to nan when pressure < 1 dbar
+    df.loc[df['pressure_interpolated'] < 1, 'ph_total'] = np.nan
+    df.loc[df['pressure_interpolated'] < 1, 'ph_total_shifted'] = np.nan
+    df.loc[df['pressure_interpolated'] < 1, 'ph_total_shifted_notl'] = np.nan
+
+    df.set_index('time', inplace=True)
+
     # convert the dataframe to an xarray dataset
     phds = df.to_xarray()
 
@@ -206,19 +245,24 @@ def main(coord_lims, configdir, fname, method):
     phds['time'].encoding = original_time.encoding
     for varname in list(phds.data_vars):
         try:
+            # if the variable is from the original dataset, use those attributes and encoding
             original_da = delete_attr(ds[varname])
             phds[varname].attrs = original_da.attrs
             phds[varname].encoding = original_da.encoding
         except KeyError:
-            try:
-                attr_mapping = cf.attribute_mapping(varname)
-                original_da = delete_attr(ds[attr_mapping['ancillary_variables']])
+            # for new variables that were added to this dataset, assign new attributes (grabbing from the attributes
+            # from the original dataset for the new CTD variables
+            attr_mapping = var_attrs[varname]
+            varname0 = varname.split('_')[0]
+            if varname0 in ['conductivity', 'temperature', 'salinity', 'density', 'pressure']:
+                # for CTD variables, get the attributes from the original variable to add here
+                original_da = delete_attr(ds[varname0])
                 phds[varname].attrs = original_da.attrs
                 for k, v in attr_mapping.items():
                     phds[varname].attrs[k] = v
                 phds[varname].encoding = original_da.encoding
-            except KeyError:
-                attr_mapping = cf.assign_ph_attrs(varname)
+            else:
+                # for the pH variables, just use the attributes from the config file
                 phds[varname].attrs = attr_mapping
 
     # add calibration coefficients to dataset
@@ -237,12 +281,6 @@ def main(coord_lims, configdir, fname, method):
 
     ds_global_attrs = ds.attrs
     phds = phds.assign_attrs(ds_global_attrs)
-
-    # calculate Total Alkalinity and add to dataset
-    # TA calculated from salinity using a linear relationship determined from in-situ water sampling data taken during
-    # glider deployment and recovery. See ../ta_equation/ta_sal_regression.py
-    ta = cf.calculate_ta(deploy, phds.salinity_interpolated)
-    phds['total_alkalinity'] = ta
 
     # Run ioos_qc gross range test based on the configuration file
     c = Config(os.path.join(configdir, 'gross_range.yml'))
@@ -333,34 +371,41 @@ def main(coord_lims, configdir, fname, method):
 
     # Rate of Change Test - TODO
 
-    # run CO2SYS
-    omega_arag, pco2, revelle = cf.run_co2sys_ta_ph(ta.values,
-                                                    phds.ph_total_shifted.values,
-                                                    phds.salinity_interpolated.values,
-                                                    phds.temperature_interpolated.values,
-                                                    phds.pressure_interpolated.values)
+    if not method == 'phonly':
+        # calculate Total Alkalinity and add to dataset
+        # TA calculated from salinity using a linear relationship determined from in-situ water sampling data taken during
+        # glider deployment and recovery. See ../ta_equation/ta_sal_regression.py
+        ta = cf.calculate_ta(deploy, phds.salinity_interpolated)
+        phds['total_alkalinity'] = ta
 
-    # add the CO2SYS variables to the dataset
-    attrs = assign_co2sys_attrs(omega_arag, '1', 'Aragonite Saturation State')
-    da = xr.DataArray(omega_arag.astype('float32'), coords=ta.coords, dims=ta.dims, attrs=attrs,
-                      name='aragonite_saturation_state')
-    phds['aragonite_saturation_state'] = da
+        # run CO2SYS
+        omega_arag, pco2, revelle = cf.run_co2sys_ta_ph(ta.values,
+                                                        phds.ph_total_shifted.values,
+                                                        phds.salinity_interpolated.values,
+                                                        phds.temperature_interpolated.values,
+                                                        phds.pressure_interpolated.values)
 
-    attrs = assign_co2sys_attrs(pco2, 'uatm', 'pCO2')
-    da = xr.DataArray(pco2.astype('float32'), coords=ta.coords, dims=ta.dims, attrs=attrs,
-                      name='pco2_calculated')
-    phds['pco2_calculated'] = da
+        # add the CO2SYS variables to the dataset
+        attrs = assign_co2sys_attrs(omega_arag, '1', 'Aragonite Saturation State')
+        da = xr.DataArray(omega_arag.astype('float32'), coords=ta.coords, dims=ta.dims, attrs=attrs,
+                          name='aragonite_saturation_state')
+        phds['aragonite_saturation_state'] = da
 
-    attrs = assign_co2sys_attrs(revelle, '1', 'Revelle Factor')
-    da = xr.DataArray(revelle.astype('float32'), coords=ta.coords, dims=ta.dims, attrs=attrs, name='revelle_factor')
-    phds['revelle_factor'] = da
+        attrs = assign_co2sys_attrs(pco2, 'uatm', 'pCO2')
+        da = xr.DataArray(pco2.astype('float32'), coords=ta.coords, dims=ta.dims, attrs=attrs,
+                          name='pco2_calculated')
+        phds['pco2_calculated'] = da
+
+        attrs = assign_co2sys_attrs(revelle, '1', 'Revelle Factor')
+        da = xr.DataArray(revelle.astype('float32'), coords=ta.coords, dims=ta.dims, attrs=attrs, name='revelle_factor')
+        phds['revelle_factor'] = da
 
     # calculate oxygen concentration in mg/L
     for dov in ['oxygen_concentration', 'oxygen_concentration_shifted']:
         name = f'{dov}_mgL'
         data = phds[dov].values * 32 / 1000  # convert from umol/L to mg/L
         attrs = assign_dissolved_oxygen_attrs(data, dov)
-        da = xr.DataArray(data.astype('float32'), coords=ta.coords, dims=ta.dims, attrs=attrs, name=name)
+        da = xr.DataArray(data.astype('float32'), coords=phds[dov].coords, dims=phds[dov].dims, attrs=attrs, name=name)
         phds[name] = da
 
     phds.to_netcdf(savefile)
@@ -370,5 +415,5 @@ if __name__ == '__main__':
     coordinate_lims = {'latitude': [36, 43], 'longitude': [-76, -66]}
     configs = '/Users/garzio/Documents/repo/lgarzio/phglider/config'
     ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/ru30-20210226T1647-profile-sci-delayed.nc'
-    method = 'final'  # 'final' 'water_sampling
+    method = 'final'  # 'final' 'phonly'
     main(coordinate_lims, configs, ncfile, method)

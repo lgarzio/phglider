@@ -43,15 +43,16 @@ The toolbox should now be installed to your conda environment.
    2. Apply CTD hysteresis test flags.
    3. Run location QARTOD test.
    4. Convert pH voltages of 0.0 to nan.
-   5. Interpolate (method=linear) pressure and remove data where pressure <1 dbar.
-   6. Interpolate (method=linear) temperature and salinity.
-   7. Remove interpolated data for profiles that failed hysteresis tests.
-   8. Calculate pH from original and corrected voltages and interpolated CTD data.
-   9. Calculate Total Alkalinity from interpolated salinity using a linear relationship determined from in-situ water sampling.
-   10. Run ioos_qc gross range test on additional variables defined in the gross_range.yml config file, and apply test results to data.
-   11. Run ioos_qc spike test on pH and corrected pH, and apply test results to data.
-   12. Calculate CO2SYS variables using TA, corrected pH, interpolated salinity, interpolated temperature, interpolated pressure.
-   13. Convert oxygen concentration to mg/L.
+   5. Apply CTD thermal lag correction.
+   6. Interpolate (method=linear) pressure and remove data where pressure <1 dbar.
+   7. Interpolate (method=linear) temperature and salinity.
+   8. Remove interpolated data for profiles that failed hysteresis tests.
+   9. Calculate pH from original and corrected voltages and interpolated CTD data.
+   10. Calculate Total Alkalinity from interpolated salinity using a linear relationship determined from in-situ water sampling.
+   11. Run ioos_qc gross range test on additional variables defined in the gross_range.yml config file, and apply test results to data.
+   12. Run ioos_qc spike test on pH and corrected pH, and apply test results to data.
+   13. Calculate CO2SYS variables using TA, corrected pH, interpolated salinity, interpolated temperature, interpolated pressure.
+   14. Convert oxygen concentration to mg/L.
 
 4. [plot_grouped_profiles_ph_qc.py](https://github.com/lgarzio/phglider/blob/master/plotting/plot_grouped_profiles_ph_qc.py): Plot corrected pH profiles with QARTOD gross range and spike tests applied.
 
@@ -62,6 +63,12 @@ The toolbox should now be installed to your conda environment.
 7. Create [configuration files](https://github.com/lgarzio/phglider/tree/master/config) for the deployment.
 
 8. [glider_to_dac_ncei.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/glider_to_dac_ncei.py): Format dataset to upload to the [IOOS glider DAC](https://gliders.ioos.us/) and [NCEI OA data portal](https://www.ncei.noaa.gov/access/ocean-carbon-acidification-data-system-portal/).
+
+## CTD Thermal Lag
+
+Originally written in Matlab by Daniel Wang and translated to Python by Jack Slater at the Virginia Institute of Marine Science. Code adapted for pH glider datasets.
+
+See https://github.com/truedichotomy/CTD_thermal_lag for original code.
 
 ## Citations
 Humphreys, M. P., Gregor, L., Pierrot, D., van Heuven, S. M. A. C., Lewis, E. R., and Wallace, D. W. R. (2020). [PyCO2SYS](https://pypi.org/project/PyCO2SYS/): marine carbonate system calculations in Python. Zenodo. doi:10.5281/zenodo.3744275.
