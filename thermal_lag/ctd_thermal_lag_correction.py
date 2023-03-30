@@ -4,6 +4,7 @@
 Authors: Daniel Wang and Jack Slater, Virginia Institute of Marine Science
 Apply CTD thermal lag corrections
 Modified by Lori Garzio 3/1/2023
+Last modified by Lori Garzio on 3/30/2023
 """
 
 import pandas as pd
@@ -272,32 +273,75 @@ def apply_thermal_lag(glider_sci):
         Returns:
             sci_data_cor dataframe with new columns of corrected values
         """
+
+        def compare_profile_ranges(pressure1, pressure2, max_threshold=.25, diff_threshold=.25):
+            # check maximum pressure
+            press1_max = np.nanmax(pressure1)
+            press2_max = np.nanmax(pressure2)
+            min_maxpress = min(press1_max, press2_max)
+            max_maxpress = max(press1_max, press2_max)
+            criteria1 = (max_maxpress - (max_maxpress * max_threshold)) <= min_maxpress
+
+            # check the pressure range
+            press1_diff = abs(np.nanmin(pressure1) - press1_max)
+            press2_diff = abs(np.nanmin(pressure2) - press2_max)
+            min_diff = min(press1_diff, press2_diff)
+            max_diff = max(press1_diff, press2_diff)
+            criteria2 = (max_diff - (max_diff * diff_threshold)) <= min_diff
+
+            return (criteria1 & criteria2)
+
         profile_id = group.iloc[0]['profile_id']
         if profile_stats.loc[profile_id, 'thermal_lag_flag'] != 0:
             try:
+                # first profile
                 if (profile_id == 0) & (profile_stats.loc[(profile_id + 1), 'thermal_lag_flag'] != 0):
                     pair_group = profile_groups.get_group(profile_id + 1)
+
+                    # check to make sure the profiles don't span different depth ranges
+                    pressure_range_test = compare_profile_ranges(group.pressure, pair_group.pressure)
+                    if not pressure_range_test:
+                        raise Exception("Profiles failed the comparison test: no valid profile to correct with")
+
+                # last profile
                 elif (profile_id == n_profiles - 1) & (profile_stats.loc[(profile_id - 1), 'thermal_lag_flag'] != 0):
                     pair_group = profile_groups.get_group(profile_id - 1)
+
+                    # check to make sure the profiles don't span different depth ranges
+                    pressure_range_test = compare_profile_ranges(group.pressure, pair_group.pressure)
+                    if not pressure_range_test:
+                        raise Exception("Profiles failed the comparison test: no valid profile to correct with")
+
                 else:
+                    belowid = profile_id - 1
+                    aboveid = profile_id + 1
+
                     below = np.abs(
-                        profile_stats.loc[profile_id, 'profile_time'] - profile_stats.loc[profile_id - 1, 'profile_time'])
+                        profile_stats.loc[profile_id, 'profile_time'] - profile_stats.loc[belowid, 'profile_time'])
                     above = np.abs(
-                        profile_stats.loc[profile_id, 'profile_time'] - profile_stats.loc[profile_id + 1, 'profile_time'])
+                        profile_stats.loc[profile_id, 'profile_time'] - profile_stats.loc[aboveid, 'profile_time'])
 
-                    # find the closest profile in time that meets all of the criteria to correct for thermal lag
-                    if (below < above) & (profile_stats.loc[(profile_id - 1), 'thermal_lag_flag'] != 0):
-                        pair_group = profile_groups.get_group(profile_id - 1)
-                    elif (below > above) & (profile_stats.loc[(profile_id + 1), 'thermal_lag_flag'] != 0):
-                        pair_group = profile_groups.get_group(profile_id + 1)
+                    group_below = profile_groups.get_group(belowid)
+                    group_above = profile_groups.get_group(aboveid)
 
-                    # if the closest profile doesn't meet all of the criteria to correct for thermal lag, check
-                    # the other profile to 1. make sure it isn't more than twice as far away as the closer profile
-                    # in time, and 2. check if it meets the criteria to correct for thermal lag
-                    elif (below < above * 2) & (profile_stats.loc[(profile_id - 1), 'thermal_lag_flag'] != 0):
-                        pair_group = profile_groups.get_group(profile_id - 1)
-                    elif (below * 2 > above) & (profile_stats.loc[(profile_id + 1), 'thermal_lag_flag'] != 0):
-                        pair_group = profile_groups.get_group(profile_id + 1)
+                    pressure_range_test_below = compare_profile_ranges(group.pressure, group_below.pressure)
+                    pressure_range_test_above = compare_profile_ranges(group.pressure, group_above.pressure)
+
+                    # find the closest profile in time that meets all of the criteria to correct for thermal lag and
+                    # has a similar depth range as the profile being tested
+                    if (below < above) & (profile_stats.loc[belowid, 'thermal_lag_flag'] != 0) & pressure_range_test_below:
+                        pair_group = profile_groups.get_group(belowid)
+                    elif (below > above) & (profile_stats.loc[aboveid, 'thermal_lag_flag'] != 0) & pressure_range_test_above:
+                        pair_group = profile_groups.get_group(aboveid)
+
+                    # if the closest profile doesn't meet all of the criteria to correct for thermal lag and is not a
+                    # comparable depth range, check the other profile to 1. make sure it isn't more than twice as far
+                    # away in time as the closer profile, 2. make sure it meets the criteria to correct for thermal lag,
+                    # and 3. make sure it spans a comparable depth range
+                    elif (below < above * 2) & (profile_stats.loc[belowid, 'thermal_lag_flag'] != 0) & pressure_range_test_below:
+                        pair_group = profile_groups.get_group(belowid)
+                    elif (below * 2 > above) & (profile_stats.loc[aboveid, 'thermal_lag_flag'] != 0) & pressure_range_test_above:
+                        pair_group = profile_groups.get_group(aboveid)
                     else:
                         raise Exception("No valid profile to correct with")
 
