@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 """
-Translated from Seabird code for calculating pH from glider outputs
-Translated by: Lori Garzio on 3/3/2021
+Translated from Seabird code for calculating pH from glider outputs by Liza Wright-Fairbanks (Matlab)
+Translated to Python by: Lori Garzio on 3/3/2021
 Last modified: 3/3/2021
 """
 import numpy as np
