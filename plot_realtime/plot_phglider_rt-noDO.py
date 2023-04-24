@@ -28,7 +28,7 @@ def main(args):
     print('\nPlotting {}'.format(deploy))
     glider_id = '{}-profile-sci-rt'.format(deploy)
     glider_vars = ['latitude', 'longitude', 'depth', 'conductivity', 'salinity', 'sci_water_pressure',
-                   'temperature', 'sbe41n_ph_ref_voltage', 'water_depth']
+                   'temperature', 'sbe41n_ph_ref_voltage', 'water_depth', 'depth_interpolated']
     if 'um_242' in deploy:
         chlvar = 'sci_flntu_chlor_units'
     else:
@@ -52,7 +52,7 @@ def main(args):
         ds[v][ds[v] > 1000] = np.nan  # convert really high values to nan
 
     tm = ds.time.values
-    depth = ds.depth.values
+    depth = ds.depth_interpolated.values
     pressure_dbar = ds.sci_water_pressure.values * 10
     temp = ds.temperature.values
     sal = ds.salinity.values
@@ -109,8 +109,8 @@ def main(args):
     # invert the last iteration through the axes
     info['axes'].invert_yaxis()
 
-    plt_vars['temp']['axes'].set_ylabel('Depth (m)')
-    plt_vars['salinity']['axes'].set_ylabel('Depth (m)')
+    plt_vars['temp']['axes'].set_ylabel('Interpolated Depth (m)')
+    plt_vars['salinity']['axes'].set_ylabel('Interpolated Depth (m)')
 
     splitter = deploy.split('-')
     glider = splitter[0]
