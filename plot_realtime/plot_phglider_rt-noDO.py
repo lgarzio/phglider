@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 3/2/2021
-Last modified: 9/8/2022
+Last modified: 4/24/2022
 Plot realtime pH glider data variables: seawater temperature, salinity, chlorophyll, pH reference
 voltage, and pH (not corrected for time lag)
 """
@@ -27,7 +27,7 @@ def main(args):
     deploy = args.deployment
     print('\nPlotting {}'.format(deploy))
     glider_id = '{}-profile-sci-rt'.format(deploy)
-    glider_vars = ['latitude', 'longitude', 'depth', 'conductivity', 'salinity', 'sci_water_pressure',
+    glider_vars = ['latitude', 'longitude', 'depth', 'conductivity', 'salinity', 'pressure',
                    'temperature', 'sbe41n_ph_ref_voltage', 'water_depth', 'depth_interpolated']
     if 'um_242' in deploy:
         chlvar = 'sci_flntu_chlor_units'
@@ -38,6 +38,7 @@ def main(args):
     gargs = dict()
     gargs['variables'] = glider_vars
     ds = cf.get_erddap_dataset(ru_server, glider_id, **gargs)
+    ds = ds.drop_vars(names=['profile_id', 'rowSize'])
     ds = ds.swap_dims({'obs': 'time'})
     ds = ds.sortby(ds.time)
 
@@ -51,22 +52,31 @@ def main(args):
         ds[v][ds[v] == 0.0] = np.nan  # convert zeros to nan
         ds[v][ds[v] > 1000] = np.nan  # convert really high values to nan
 
-    tm = ds.time.values
-    depth = ds.depth_interpolated.values
-    pressure_dbar = ds.sci_water_pressure.values * 10
-    temp = ds.temperature.values
-    sal = ds.salinity.values
-    vrs = ds.sbe41n_ph_ref_voltage.values
-    chl = ds[chlvar].values
+    # convert to dataframe and drop duplicated timestamps
+    df = ds.to_dataframe()
+
+    # drop duplicated timestamps
+    df = df.loc[~df.index.duplicated(keep='first')]
+
+    df.reset_index(inplace=True)
+
+    # interpolate pressure temperature and salinity (needed to calculate pH)
+    df['pressure_interpolated'] = df['pressure'].interpolate(method='linear', limit_direction='both', limit=2)
+    df['temperature_interpolated'] = df['temperature'].interpolate(method='linear', limit_direction='both', limit=2)
+    df['salinity_interpolated'] = df['salinity'].interpolate(method='linear', limit_direction='both', limit=2)
+
+    tm = df.time.values
+    depth = df.depth_interpolated.values
+    pressure_dbar = df.pressure_interpolated.values
+    temp = df.temperature_interpolated.values
+    sal = df.salinity_interpolated.values
+    vrs = df.sbe41n_ph_ref_voltage.values
+    chl = df[chlvar].values
 
     # calculate pH
-    ph = np.array([])
-    for i, press in enumerate(pressure_dbar):
-        f_p = np.polyval([cc['f6'], cc['f5'], cc['f4'], cc['f3'], cc['f2'], cc['f1'], 0], press)
-        phfree, phtot = phcalc.phcalc(vrs[i], press, temp[i], sal[i], cc['k0'], cc['k2'], f_p)
-        if phtot > 14:
-            phtot = np.nan
-        ph = np.append(ph, phtot)
+    df['f_p'] = np.polyval([cc['f6'], cc['f5'], cc['f4'], cc['f3'], cc['f2'], cc['f1'], 0], pressure_dbar)
+    phfree, phtot = phcalc.phcalc(vrs, pressure_dbar, temp, sal, cc['k0'], cc['k2'], df.f_p)
+    df['ph_total'] = phtot
 
     # plot
     fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3, figsize=(20, 10), sharex=True, sharey=True)
@@ -74,7 +84,7 @@ def main(args):
                 'salinity': {'var': sal, 'axes': ax4, 'cmap': cmo.cm.haline, 'ttl': 'Salinity'},
                 'chl': {'var': chl, 'axes': ax2, 'cmap': cmo.cm.algae, 'ttl': 'Chlorophyll ({}g/L)'.format(chr(956))},
                 'ph_volt': {'var': vrs, 'axes': ax3, 'cmap': cmo.cm.matter, 'ttl': 'pH Reference Voltage'},
-                'ph': {'var': ph, 'axes': ax6, 'cmap': cmo.cm.matter, 'ttl': 'pH (uncorrected)'}
+                'ph': {'var': df.ph_total.values, 'axes': ax6, 'cmap': cmo.cm.matter, 'ttl': 'pH (uncorrected)'}
                 }
     for pv, info in plt_vars.items():
         xc = info['axes'].scatter(tm, depth, c=info['var'], cmap=info['cmap'], s=10, edgecolor='None')
