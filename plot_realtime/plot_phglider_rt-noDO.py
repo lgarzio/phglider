@@ -23,7 +23,7 @@ plt.rcParams.update({'font.size': 16})
 
 
 def main(args):
-    ru_server = 'http://slocum-data.marine.rutgers.edu//erddap'
+    ru_server = 'https://slocum-data.marine.rutgers.edu/erddap'
     deploy = args.deployment
     print('\nPlotting {}'.format(deploy))
     glider_id = '{}-profile-sci-rt'.format(deploy)

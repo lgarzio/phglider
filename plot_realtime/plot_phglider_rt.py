@@ -24,8 +24,8 @@ plt.rcParams.update({'font.size': 16})
 
 #def main(deploy, sensor_sn, sfilename):
 def main(args):
-    ru_server = 'http://slocum-data.marine.rutgers.edu//erddap'
     deploy = args.deployment
+    ru_server = 'https://slocum-data.marine.rutgers.edu/erddap'
     print('\nPlotting {}'.format(deploy))
     glider_id = '{}-profile-sci-rt'.format(deploy)
     glider_vars = ['latitude', 'longitude', 'depth', 'conductivity', 'salinity', 'sci_water_pressure',
