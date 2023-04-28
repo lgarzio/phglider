@@ -42,10 +42,12 @@ with open(calfile) as json_file:
     cc = json.load(json_file)
 
 try:
+    # 12-order polynomial
     f_p = np.polyval([cc['f12'], cc['f11'], cc['f10'], cc['f9'], cc['f8'], cc['f7'], cc['f6'], cc['f5'], cc['f4'],
                       cc['f3'], cc['f2'], cc['f1'], 0], pres_dbar)
     k2 = [cc['k2f3'], cc['k2f2'], cc['k2f1'], cc['k2f0']]
 except KeyError:
+    # 6-order polynomial
     f_p = np.polyval([cc['f6'], cc['f5'], cc['f4'], cc['f3'], cc['f2'], cc['f1'], 0], pres_dbar)
     k2 = cc['k2']
 phfree, phtot = phcalc.phcalc(volt, pres_dbar, temp, sal, cc['k0'], k2, f_p)
