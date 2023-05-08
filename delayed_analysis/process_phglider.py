@@ -126,6 +126,7 @@ def main(coord_lims, configdir, fname, method):
     ds = ds.swap_dims({'obs': 'time'})
     ds = ds.sortby(ds.time)
     savefile = f'{fname.split(".nc")[0]}_qc.nc'
+    tl_csv_savefile = os.path.join(os.path.dirname(fname), f'{deploy}_thermal_lag_profile_summary.csv')
 
     # apply QARTOD QC to all variables except pressure
     qcvars = [x for x in list(ds.data_vars) if '_qartod_summary_flag' in x]
@@ -183,7 +184,7 @@ def main(coord_lims, configdir, fname, method):
     df = df.loc[~df.index.duplicated(keep='first')]
 
     # apply CTD thermal lag adjustment
-    df = ctd_thermal_lag.apply_thermal_lag(df)
+    df = ctd_thermal_lag.apply_thermal_lag(df, save_profile_stats=tl_csv_savefile)
 
     # rename thermal lag columns
     df.rename(columns={'salt_outside': 'salinity_lag_shifted',
