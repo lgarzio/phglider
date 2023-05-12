@@ -3,7 +3,7 @@
 """
 Translated from Seabird code for calculating pH from glider outputs by Liza Wright-Fairbanks (Matlab)
 Translated to Python by: Lori Garzio on 3/3/2021
-Last modified: 3/3/2021
+Last modified: 5/12/2023
 """
 import numpy as np
 
@@ -15,8 +15,9 @@ def phcalc(vrs, press, temp, salt, k0, k2, pcoefs):
     :param temp: temperature in degrees C
     :param salt: salinity (usually CTD salinity on the PSS)
     :param k0: sensor reference potential (intercept at Temp = 0 C)
-    :param k2: linear temperature coefficient (slope)
-    :param pcoefs: sensor dependent pressure coefficients
+    :param k2: linear temperature coefficient (slope), or list containing K2(P) 3rd order polynomial pressure offset
+    coefficients: [K2f3, K2f2, K2f1, K2f0]
+    :param pcoefs: sensor dependent pressure coefficients (polynomial calculation of f(P) coefficients)
     :return: phfree, phtot
     """
     # SET CONSTANTS
@@ -74,20 +75,29 @@ def phcalc(vrs, press, temp, salt, k0, k2, pcoefs):
     # last divide by 10 is for units in cm^3 vs m^3 and the Pascal vs bar units in mks constants. (Meter/kilo/second)
     log10gammaHCLtP = log10gammaHCl + deltaVHCl * (press / 10) / (R * Tk * ln10) / 2. / 10
 
-    # Sensor reference potential
-    k0T = k0 + k2 * temp  # temp in deg C
+    if isinstance(k2, list):
+        # added by L. Garzio with input from Sea-Bird to incorporate k2(P) correction
+        # K2P coefficients are used to correct the temperature offset over pressure
+        # Eo(T) or temperature offset Johnson et al. Anal. Chem. 2016
+        # Polynomial K2, ie K2(P). From MBARI processing code base 11042022
+        EoT = temp * np.polyval(k2, press)
 
-    # CALCULATE PRESSURE CORRECTION (POLYNOMIAL FUNCTION OF PRESSURE)
-    # ALL SENSORS HAVE A PRESSURE RESPONSE WHICH IS DETERMINED IN THE LAB
-    # AND CONTAINED IN THE POLYNOMIAL Pcoefs
-    # pc = [flipud(Pcoefs);0]; % Matlab wants descending powers & n+1 (add 0)
-    # pcorr = polyval(pc,Press)
-    k0TP = k0T + pcoefs
+        phfree = (vrs - EoT - pcoefs - k0) / (R * Tk / F * ln10) + np.log(Cltotal) / ln10 + 2 * log10gammaHCLtP  # mol/kg-H2O scale
+    else:
+        # Sensor reference potential
+        k0T = k0 + k2 * temp  # temp in deg C
 
-    # pH on free scale then corrected to get to pH total on mol/kg sw scale
-    # pHinsituFree = (Vrs - k0TP) / (R * Tk / F * ln10) + log(Cltotal) / ln10 + 2 * log10gammaHCLtP
-    # this will be mol kg H2O. need to convert to mol/kg sw
-    phfree = (vrs - k0TP) / (R * Tk / F * ln10) + np.log(Cltotal) / ln10 + 2 * log10gammaHCLtP  # mol/kg-H2O scale
+        # CALCULATE PRESSURE CORRECTION (POLYNOMIAL FUNCTION OF PRESSURE)
+        # ALL SENSORS HAVE A PRESSURE RESPONSE WHICH IS DETERMINED IN THE LAB
+        # AND CONTAINED IN THE POLYNOMIAL Pcoefs
+        # pc = [flipud(Pcoefs);0]; % Matlab wants descending powers & n+1 (add 0)
+        # pcorr = polyval(pc,Press)
+        k0TP = k0T + pcoefs
+
+        # pH on free scale then corrected to get to pH total on mol/kg sw scale
+        # pHinsituFree = (Vrs - temp offset - press offset) / (R * Tk / F * ln10) + log(Cltotal) / ln10 + 2 * log10gammaHCLtP
+        # this will be mol kg H2O. need to convert to mol/kg sw
+        phfree = (vrs - k0TP) / (R * Tk / F * ln10) + np.log(Cltotal) / ln10 + 2 * log10gammaHCLtP  # mol/kg-H2O scale
 
     # CONVERT TO mol/kg-sw scale - JP 2/4/16
     phfree = phfree - np.log10(1 - 0.001005 * salt)  # mol/kg-sw scale
