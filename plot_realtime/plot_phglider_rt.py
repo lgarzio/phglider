@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 3/2/2021
-Last modified: 4/24/2023
+Last modified: 5/12/2023
 Plot realtime pH glider data variables: seawater temperature, salinity, chlorophyll, dissolved oxygen, pH reference
 voltage, and pH (not corrected for time lag)
 """
@@ -24,8 +24,8 @@ plt.rcParams.update({'font.size': 16})
 
 #def main(deploy, sensor_sn, sfilename):
 def main(args):
-    deploy = args.deployment
     ru_server = 'https://slocum-data.marine.rutgers.edu/erddap'
+    deploy = args.deployment
     print('\nPlotting {}'.format(deploy))
     glider_id = '{}-profile-sci-rt'.format(deploy)
     glider_vars = ['latitude', 'longitude', 'depth', 'conductivity', 'salinity', 'pressure',
@@ -76,8 +76,17 @@ def main(args):
     chl = df[chlvar].values
 
     # calculate pH
-    df['f_p'] = np.polyval([cc['f6'], cc['f5'], cc['f4'], cc['f3'], cc['f2'], cc['f1'], 0], pressure_dbar)
-    phfree, phtot = phcalc.phcalc(vrs, pressure_dbar, temp, sal, cc['k0'], cc['k2'], df.f_p)
+    try:
+        # 12-order polynomial
+        f_p = np.polyval([cc['f12'], cc['f11'], cc['f10'], cc['f9'], cc['f8'], cc['f7'], cc['f6'], cc['f5'], cc['f4'],
+                          cc['f3'], cc['f2'], cc['f1'], 0], pressure_dbar)
+        k2 = [cc['k2f3'], cc['k2f2'], cc['k2f1'], cc['k2f0']]
+    except KeyError:
+        # 6-order polynomial
+        f_p = np.polyval([cc['f6'], cc['f5'], cc['f4'], cc['f3'], cc['f2'], cc['f1'], 0], pressure_dbar)
+        k2 = cc['k2']
+
+    phfree, phtot = phcalc.phcalc(vrs, pressure_dbar, temp, sal, cc['k0'], k2, f_p)
     df['ph_total'] = phtot
 
     # plot
