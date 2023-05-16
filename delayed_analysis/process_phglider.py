@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 3/28/2022
-Last modified: 3/23/2023
+Last modified: 5/16/2023
 Process delayed-mode pH glider data.
 1. Apply QARTOD QC flags (downloaded in the files) to CTD and DO data (set data flagged as 3/SUSPECT and 4/FAIL to nan).
 2. Set profiles flagged as 3/SUSPECT and 4/FAIL from CTD hysteresis tests to nan (conductivity, temperature,
@@ -192,6 +192,7 @@ def main(coord_lims, configdir, fname, method):
                        'rho_outside': 'density_lag_shifted'}, inplace=True)
 
     # generate combined data arrays - use thermal lag corrected data when available, otherwise use raw data
+    df['conductivity_combined'] = combine_data(np.array(df['conductivity_lag_shifted']), np.array(df['conductivity']))
     df['temperature_combined'] = combine_data(np.array(df['temperature_lag_shifted']), np.array(df['temperature']))
     df['salinity_combined'] = combine_data(np.array(df['salinity_lag_shifted']), np.array(df['salinity']))
     df['density_combined'] = combine_data(np.array(df['density_lag_shifted']), np.array(df['density']))
@@ -213,13 +214,23 @@ def main(coord_lims, configdir, fname, method):
     df = df.loc[df.pressure_qartod_summary_flag != 4].copy()
 
     # calculate pH and add to dataframe
-    df['f_p'] = np.polyval([cc['f6'], cc['f5'], cc['f4'], cc['f3'], cc['f2'], cc['f1'], 0], df.pressure_interpolated)
+    try:
+        # 12-order polynomial
+        f_p = np.polyval([cc['f12'], cc['f11'], cc['f10'], cc['f9'], cc['f8'], cc['f7'], cc['f6'], cc['f5'], cc['f4'],
+                          cc['f3'], cc['f2'], cc['f1'], 0], df.pressure_interpolated)
+        k2 = [cc['k2f3'], cc['k2f2'], cc['k2f1'], cc['k2f0']]
+    except KeyError:
+        # 6-order polynomial
+        f_p = np.polyval([cc['f6'], cc['f5'], cc['f4'], cc['f3'], cc['f2'], cc['f1'], 0], df.pressure_interpolated)
+        k2 = cc['k2']
+
+    df['f_p'] = f_p
     phfree, phtot = phcalc.phcalc(df.sbe41n_ph_ref_voltage, df.pressure_interpolated, df.temperature_interpolated,
-                                  df.salinity_interpolated, cc['k0'], cc['k2'], df.f_p)
+                                  df.salinity_interpolated, cc['k0'], k2, df.f_p)
     df['ph_total'] = phtot
 
     phfree, phtot = phcalc.phcalc(df.sbe41n_ph_ref_voltage_shifted, df.pressure_interpolated,
-                                  df.temperature_interpolated, df.salinity_interpolated, cc['k0'], cc['k2'], df.f_p)
+                                  df.temperature_interpolated, df.salinity_interpolated, cc['k0'], k2, df.f_p)
     df['ph_total_shifted'] = phtot
 
     # calculate pH shifted without the thermal lag applied
@@ -227,7 +238,7 @@ def main(coord_lims, configdir, fname, method):
     df['salinity_interpolated_notl'] = df['salinity'].interpolate(method='linear', limit_direction='both', limit=2)
 
     phfree, phtot = phcalc.phcalc(df.sbe41n_ph_ref_voltage_shifted, df.pressure_interpolated,
-                                  df.temperature_interpolated_notl, df.salinity_interpolated_notl, cc['k0'], cc['k2'], df.f_p)
+                                  df.temperature_interpolated_notl, df.salinity_interpolated_notl, cc['k0'], k2, df.f_p)
     df['ph_total_shifted_notl'] = phtot
 
     # there's a lot of noise in pH at the surface, so set pH values to nan when pressure < 1 dbar
