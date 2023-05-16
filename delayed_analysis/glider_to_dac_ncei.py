@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 4/28/2021
-Last modified: 3/23/2023
+Last modified: 5/16/2023
 Process final glider dataset to upload to the IOOS glider DAC (https://gliders.ioos.us/) and
 NCEI OA data portal (https://www.ncei.noaa.gov/access/ocean-carbon-acidification-data-system-portal/)
 Modified from code written by Leila Belabbassi.
@@ -50,12 +50,11 @@ def main(fname):
     proc_vars = ['time', 'profile_time', 'profile_lon', 'profile_lat', 'latitude', 'longitude', 'depth', 'pressure',
                  'temperature', 'density', 'salinity', 'conductivity',
                  'sbe41n_ph_ref_voltage', 'sbe41n_ph_ref_voltage_shifted', 'ph_total', 'ph_total_shifted',
-                 'pressure_interpolated', 'temperature_interpolated', 'salinity_interpolated']
+                 'pressure_interpolated', 'temperature_interpolated', 'salinity_interpolated', 'depth_interpolated']
 
     search_vars = ['chlorophyll_a', 'sci_flntu_chlor_units', 'total_alkalinity', 'aragonite_saturation_state',
                    'beta_700nm', 'cdom', 'oxygen_concentration', 'oxygen_concentration_shifted', 'oxygen_saturation',
-                   'oxygen_saturation_shifted', 'conductivity_lag_shifted', 'salinity_lag_shifted',
-                   'temperature_lag_shifted', 'density_lag_shifted', 'temperature_combined', 'salinity_combined',
+                   'oxygen_saturation_shifted', 'conductivity_combined', 'temperature_combined', 'salinity_combined',
                    'density_combined']
     for sv in search_vars:
         if sv in ds.data_vars:
@@ -159,7 +158,12 @@ def main(fname):
                    'oxygen_concentration': 'oxygen_concentration_raw',
                    'oxygen_concentration_shifted': 'oxygen_concentration_corrected',
                    'oxygen_saturation': 'oxygen_saturation_raw',
-                   'oxygen_saturation_shifted': 'oxygen_saturation_corrected'}
+                   'oxygen_saturation_shifted': 'oxygen_saturation_corrected',
+                   'conductivity_combined': 'conductivity_lag_shifted',
+                   'temperature_combined': 'temperature_lag_shifted',
+                   'salinity_combined': 'salinity_lag_shifted',
+                   'density_combined': 'density_lag_shifted'
+                   }
     ds = ds.rename(rename_dict)
 
     # specify the variable encoding
