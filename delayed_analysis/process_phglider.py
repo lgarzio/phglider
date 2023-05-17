@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 3/28/2022
-Last modified: 5/16/2023
+Last modified: 5/17/2023
 Process delayed-mode pH glider data.
 1. Apply QARTOD QC flags (downloaded in the files) to CTD and DO data (set data flagged as 3/SUSPECT and 4/FAIL to nan).
 2. Set profiles flagged as 3/SUSPECT and 4/FAIL from CTD hysteresis tests to nan (conductivity, temperature,
@@ -385,9 +385,14 @@ def main(coord_lims, configdir, fname, method):
 
     if not method == 'phonly':
         # calculate Total Alkalinity and add to dataset
-        # TA calculated from salinity using a linear relationship determined from in-situ water sampling data taken during
-        # glider deployment and recovery. See ../ta_equation/ta_sal_regression.py
+        # TA calculated from salinity using a linear relationship determined from in-situ water sampling data taken
+        # during glider deployment and recovery. See ../ta_equation/ta_sal_regression.py
         ta = cf.calculate_ta(deploy, phds.salinity_interpolated)
+
+        # when pH is nan, TA is nan
+        idx = np.isnan(phds.ph_total_shifted.values)
+        ta[idx] = np.nan
+
         phds['total_alkalinity'] = ta
 
         # run CO2SYS
