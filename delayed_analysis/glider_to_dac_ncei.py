@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 4/28/2021
-Last modified: 5/16/2023
+Last modified: 5/17/2023
 Process final glider dataset to upload to the IOOS glider DAC (https://gliders.ioos.us/) and
 NCEI OA data portal (https://www.ncei.noaa.gov/access/ocean-carbon-acidification-data-system-portal/)
 Modified from code written by Leila Belabbassi.
@@ -165,6 +165,14 @@ def main(fname):
                    'density_combined': 'density_lag_shifted'
                    }
     ds = ds.rename(rename_dict)
+
+    # make sure valid_min and valid_max are the same data type as the variables
+    for v in ds.data_vars:
+        try:
+            ds[v].attrs['valid_min'] = np.float32(ds[v].valid_min)
+            ds[v].attrs['valid_max'] = np.float32(ds[v].valid_max)
+        except AttributeError:
+            continue
 
     # specify the variable encoding
     var_encoding = make_encoding(ds)
