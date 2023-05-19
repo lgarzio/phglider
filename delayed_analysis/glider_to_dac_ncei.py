@@ -195,14 +195,13 @@ def main(fname):
     savedir = os.path.join(os.path.dirname(fname), 'ncei')
     os.makedirs(savedir, exist_ok=True)
 
-    # export tab-delimited lonlat.txt file NCEI data submission
-    lon = list(np.round(ds.lon.values, 4))
-    lat = list(np.round(ds.lat.values, 4))
-    txt_file = os.path.join(savedir, f'lonlat-{deploy}.txt')
-    with open(txt_file, 'w', newline='') as f:
-        writer = csv.DictWriter(f, fieldnames=['lon', 'lat'], delimiter='\t')
-        for a, b in zip(lon, lat):
-            writer.writerow({'lon': a, 'lat': b})
+    # export unique lonlat.csv file NCEI data submission
+    lonlat = dict(lon=list(np.round(ds.lon.values, 4)),
+                  lat=list(np.round(ds.lat.values, 4)))
+    df = pd.DataFrame(lonlat)
+    df.drop_duplicates(inplace=True)
+
+    df.to_csv(os.path.join(savedir, f'lonlat-{deploy}.csv'), header=None, index=None)
 
     savefile = os.path.join(savedir, f'{deploy}-delayed.nc')
     ds.to_netcdf(savefile, encoding=var_encoding, format="netCDF4", engine="netcdf4", unlimited_dims=["time"])
