@@ -341,12 +341,12 @@ def find_thermal_lag_params_ts(time1, cond1, temp1, pres1, time2, cond2, temp2, 
         salt = np.append(nrmlsalt1, nrmlsalt2)
         temp = np.append(nrmltemp1, nrmltemp2)
 
-        # remove nans
-        nonan = np.where(~np.isnan(salt))[0]
+        # remove nans, 0.0 and 1.0
+        nonan = (~np.isnan(salt)) & (salt > 0.0) & (salt < 1.0)
         salt = salt[nonan]
         temp = temp[nonan]
 
-        nonan = np.where(~np.isnan(temp))[0]
+        nonan = (~np.isnan(temp)) & (temp > 0.0) & (temp < 1.0)
         salt = salt[nonan]
         temp = temp[nonan]
 

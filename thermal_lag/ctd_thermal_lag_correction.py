@@ -4,7 +4,7 @@
 Authors: Daniel Wang and Jack Slater, Virginia Institute of Marine Science
 Apply CTD thermal lag corrections
 Modified by Lori Garzio 3/1/2023
-Last modified by Lori Garzio on 3/30/2023
+Last modified by Lori Garzio on 6/1/2023
 """
 
 import pandas as pd
@@ -19,7 +19,7 @@ pd.set_option('display.width', 320, "display.max_columns", 10)  # for display in
 np.seterr(divide='ignore', invalid='ignore')
 
 
-def apply_thermal_lag(glider_sci):
+def apply_thermal_lag(glider_sci, save_profile_stats=False):
     # Step 1: Prepare deployment data
 
     temperature_diff_threshold = 0.25
@@ -233,28 +233,28 @@ def apply_thermal_lag(glider_sci):
     profile_groups.apply(assign_TS_flag)
     profile_groups = sci_data.groupby("profile_id")
 
-    def assign_SP_flag(group):
-        """
-        Assign thermal lag flag as 2 (SP) or remain as current based on conditions
-        Args:
-            group (pandas groupby object): Profiles grouped by profile_id
-        Returns:
-            Profile stats dataframe with updated thermal_lag_flag column
-        """
-        profile_id = group.iloc[0]['profile_id']
-        current = profile_stats.loc[profile_id, 'thermal_lag_flag']
-        cond6 = profile_stats.loc[profile_id, 'interface_thickness'] < 8
-        cond7 = ~np.isnan(profile_stats.loc[profile_id, 'interface_thickness'])
-        cond8 = profile_stats.loc[profile_id, 'interface_measurements_count'] <= 32
-        cond9 = group['pressure'].max() - profile_stats.loc[profile_id, 'thermocline_pressure'] >= 2
-        cond10 = profile_stats.loc[profile_id, 'thermocline_pressure'] - group['pressure'].min() >= 2
-        cond11 = profile_stats.loc[profile_id, 'thermal_lag_flag'] == 1
-
-        profile_stats.loc[profile_id, 'thermal_lag_flag'] = np.select([cond6 & cond7 & cond8 & cond9 & cond10 & cond11],
-                                                                      [2], current)
-
-    profile_groups.apply(assign_SP_flag)
-    profile_groups = sci_data.groupby("profile_id")
+    # def assign_SP_flag(group):
+    #     """
+    #     Assign thermal lag flag as 2 (SP) or remain as current based on conditions
+    #     Args:
+    #         group (pandas groupby object): Profiles grouped by profile_id
+    #     Returns:
+    #         Profile stats dataframe with updated thermal_lag_flag column
+    #     """
+    #     profile_id = group.iloc[0]['profile_id']
+    #     current = profile_stats.loc[profile_id, 'thermal_lag_flag']
+    #     cond6 = profile_stats.loc[profile_id, 'interface_thickness'] < 8
+    #     cond7 = ~np.isnan(profile_stats.loc[profile_id, 'interface_thickness'])
+    #     cond8 = profile_stats.loc[profile_id, 'interface_measurements_count'] <= 32
+    #     cond9 = group['pressure'].max() - profile_stats.loc[profile_id, 'thermocline_pressure'] >= 2
+    #     cond10 = profile_stats.loc[profile_id, 'thermocline_pressure'] - group['pressure'].min() >= 2
+    #     cond11 = profile_stats.loc[profile_id, 'thermal_lag_flag'] == 1
+    #
+    #     profile_stats.loc[profile_id, 'thermal_lag_flag'] = np.select([cond6 & cond7 & cond8 & cond9 & cond10 & cond11],
+    #                                                                   [2], current)
+    #
+    # profile_groups.apply(assign_SP_flag)
+    # profile_groups = sci_data.groupby("profile_id")
 
     # Step 3
 
@@ -273,6 +273,24 @@ def apply_thermal_lag(glider_sci):
         Returns:
             sci_data_cor dataframe with new columns of corrected values
         """
+
+        def check_data_availability(var1, var2):
+            # make sure conductivity and temperature arrays both contain data
+            criteria1 = np.sum(~np.isnan(var1)) > 0
+            criteria2 = np.sum(~np.isnan(var2)) > 0
+
+            return criteria1 & criteria2
+
+        def check_correction_magnitude(var_orig, var_corrected, const=1):
+            # calculate the difference between the corrected values compared to the the original values.
+            # if the maximum difference between corrected and uncorrected is greater than the difference between
+            # the min and max value from the original profile multiplied by an optional constant, test fails (return False)
+            max_diff = np.nanmax(abs(var_orig - var_corrected))
+            profile_diff = np.nanmax(var_orig) - np.nanmin(var_orig)
+            if max_diff > profile_diff * const:
+                return False
+            else:
+                return True
 
         def compare_profile_ranges(pressure1, pressure2, max_threshold=.25, diff_threshold=.25):
             # check maximum pressure
@@ -301,6 +319,8 @@ def apply_thermal_lag(glider_sci):
                     # check to make sure the profiles don't span different depth ranges
                     pressure_range_test = compare_profile_ranges(group.pressure, pair_group.pressure)
                     if not pressure_range_test:
+                        profile_stats.loc[profile_id, 'thermal_lag_applied'] = 0
+                        profile_stats.loc[profile_id, 'comment'] = 'No valid profile to correct with'
                         raise Exception("Profiles failed the comparison test: no valid profile to correct with")
 
                 # last profile
@@ -310,6 +330,8 @@ def apply_thermal_lag(glider_sci):
                     # check to make sure the profiles don't span different depth ranges
                     pressure_range_test = compare_profile_ranges(group.pressure, pair_group.pressure)
                     if not pressure_range_test:
+                        profile_stats.loc[profile_id, 'thermal_lag_applied'] = 0
+                        profile_stats.loc[profile_id, 'comment'] = 'No valid profile to correct with'
                         raise Exception("Profiles failed the comparison test: no valid profile to correct with")
 
                 else:
@@ -324,25 +346,35 @@ def apply_thermal_lag(glider_sci):
                     group_below = profile_groups.get_group(belowid)
                     group_above = profile_groups.get_group(aboveid)
 
+                    # check the depth ranges of the adjacent profiles
                     pressure_range_test_below = compare_profile_ranges(group.pressure, group_below.pressure)
                     pressure_range_test_above = compare_profile_ranges(group.pressure, group_above.pressure)
 
+                    # check the data availability of the adjacent profiles
+                    data_check_below = check_data_availability(group_below.conductivity, group_below.temperature)
+                    data_check_above = check_data_availability(group_above.conductivity, group_above.temperature)
+
                     # find the closest profile in time that meets all of the criteria to correct for thermal lag and
-                    # has a similar depth range as the profile being tested
-                    if (below < above) & (profile_stats.loc[belowid, 'thermal_lag_flag'] != 0) & pressure_range_test_below:
+                    # has a similar depth range as the profile being tested, and has data available (e.g. the entire
+                    # profile wasn't removed by the QC)
+                    if (below < above) & (profile_stats.loc[belowid, 'thermal_lag_flag'] != 0) & pressure_range_test_below & data_check_below:
                         pair_group = profile_groups.get_group(belowid)
-                    elif (below > above) & (profile_stats.loc[aboveid, 'thermal_lag_flag'] != 0) & pressure_range_test_above:
+                    elif (below > above) & (profile_stats.loc[aboveid, 'thermal_lag_flag'] != 0) & pressure_range_test_above & data_check_above:
                         pair_group = profile_groups.get_group(aboveid)
 
                     # if the closest profile doesn't meet all of the criteria to correct for thermal lag and is not a
-                    # comparable depth range, check the other profile to 1. make sure it isn't more than twice as far
-                    # away in time as the closer profile, 2. make sure it meets the criteria to correct for thermal lag,
-                    # and 3. make sure it spans a comparable depth range
-                    elif (below < above * 2) & (profile_stats.loc[belowid, 'thermal_lag_flag'] != 0) & pressure_range_test_below:
+                    # comparable depth range and/or doesn't have all necessary data, check the other profile to
+                    # 1. make sure it isn't more than twice as far away in time as the closer profile,
+                    # 2. make sure it meets the criteria to correct for thermal lag,
+                    # 3. make sure it spans a comparable depth range, and
+                    # 4. has data available (e.g. the entire profile wasn't removed by QC)
+                    elif (below < above * 2) & (profile_stats.loc[belowid, 'thermal_lag_flag'] != 0) & pressure_range_test_below & data_check_below:
                         pair_group = profile_groups.get_group(belowid)
-                    elif (below * 2 > above) & (profile_stats.loc[aboveid, 'thermal_lag_flag'] != 0) & pressure_range_test_above:
+                    elif (below * 2 > above) & (profile_stats.loc[aboveid, 'thermal_lag_flag'] != 0) & pressure_range_test_above & data_check_above:
                         pair_group = profile_groups.get_group(aboveid)
                     else:
+                        profile_stats.loc[profile_id, 'thermal_lag_applied'] = 0
+                        profile_stats.loc[profile_id, 'comment'] = 'No valid profile to correct with'
                         raise Exception("No valid profile to correct with")
 
                 profile_id2 = pair_group.iloc[0]['profile_id']
@@ -389,6 +421,8 @@ def apply_thermal_lag(glider_sci):
 
                     # if any of these conditions is met, do no apply correction
                     if temp_condition1a | temp_condition1b | temp_condition2 | temp_condition2b:
+                        profile_stats.loc[profile_id, 'thermal_lag_applied'] = 0
+                        profile_stats.loc[profile_id, 'comment'] = 'Correction did not pass the temperature magnitude check'
                         raise Exception("Correction is invalid, not applying correction")
 
                     salt_cor1 = gsw.SP_from_C(np.multiply(cond_outside1, 10), temp1, pres1)  # corrected Practical Salinity
@@ -403,6 +437,21 @@ def apply_thermal_lag(glider_sci):
 
                     sigma0_outside1 = gsw.sigma0(saltA_outside1, ctemp_outside1)  # potential density anomaly
 
+                    # calculate salinity and density uncorrected to double check the magnitude of the correction
+                    salt_uncorrected = gsw.SP_from_C(np.multiply(cond1, 10), temp1, pres1)
+                    density_uncorrected = gsw.rho(salt_uncorrected, temp1, pres1)
+
+                    # check that the magnitude of the correction isn't unreasonable
+                    temp_correction_check = check_correction_magnitude(temp1, ctemp_outside1)
+                    density_correction_check = check_correction_magnitude(density_uncorrected, rho_outside1, const=2)
+                    salt_correction_check = check_correction_magnitude(salt_uncorrected, salt_cor1, const=2)
+
+                    # if any of the magnitude tests fail (temperature, density or salinity), do not apply correction
+                    if not temp_correction_check & density_correction_check & salt_correction_check:
+                        profile_stats.loc[profile_id, 'thermal_lag_applied'] = 0
+                        profile_stats.loc[profile_id, 'comment'] = 'Correction did not pass the magnitude check'
+                        raise Exception(f"Profile {profile_id} doesn't pass the magnitude check, not applying correction")
+
                     profile_stats.loc[profile_id, 'alpha'] = params.x[0]
                     profile_stats.loc[profile_id, 'tau'] = params.x[1]
 
@@ -413,6 +462,8 @@ def apply_thermal_lag(glider_sci):
                     group['rho_outside'] = rho_outside1  # in-situ density
                     group['sigma0_outside'] = sigma0_outside1  # potential density anomaly
                 else:
+                    profile_stats.loc[profile_id, 'thermal_lag_applied'] = 0
+                    profile_stats.loc[profile_id, 'comment'] = 'Required data not available to calculate thermal lag'
                     print('Not all required data available to calculate thermal lag')
             except Exception as e:
                 print(profile_id)
@@ -426,5 +477,8 @@ def apply_thermal_lag(glider_sci):
     # merge the original glider_sci dataframe with the corrected CTD dataframe
     sci_data_cor = sci_data_cor[keep_cols]
     merged = glider_sci.merge(sci_data_cor, how='outer', on='time')
+
+    if save_profile_stats:
+        profile_stats.to_csv(save_profile_stats)
 
     return merged
