@@ -42,11 +42,11 @@ def calculate_ta(deployment, salinity):
     ta.attrs['long_name'] = 'Total Alkalinity'
     ta.attrs['ancillary_variables'] = 'salinity'
     ta.attrs['observation_type'] = 'calculated'
-    ta.attrs['comment'] = 'Calculated from salinity using the linear relationship (TA = {} * salinity + {}) ' \
-                          'determined from in-situ water sampling data taken during glider deployment and ' \
-                          'recovery in addition to ship-based water samples as described in Wright-Fairbanks ' \
+    ta.attrs['comment'] = 'Calculated from thermal lag adjusted salinity using the linear relationship ' \
+                          '(TA = {} * salinity + {}) determined from in-situ water sampling data taken during glider ' \
+                          'deployment and recovery in addition to ship-based water samples as described in Wright-Fairbanks ' \
                           'et al 2020 https://doi.org/10.1029/2020JC016505'.format(np.round(ta_equ['m'], 2),
-                                                                                       np.round(ta_equ['b'], 2))
+                                                                                   np.round(ta_equ['b'], 2))
 
     return ta
 
