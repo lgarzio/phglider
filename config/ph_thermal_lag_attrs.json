@@ -15,6 +15,10 @@
         "comment": "Density corrected for thermal lag, when appropriate. Calculated using the gsw.rho function.",
 		"ancillary_variables": "salinity temperature pressure"
     },
+	"conductivity_combined": {
+        "comment": "Combined conductivity variable, using the thermal lag shifted conductivity when available, and raw conductivity when a given profile was not adjusted for thermal lag",
+		"ancillary_variables": "conductivity_lag_shifted conductivity"
+    },
 	"temperature_combined": {
         "comment": "Combined temperature variable, using the thermal lag shifted temperature when available, and raw temperature when a given profile was not adjusted for thermal lag",
 		"ancillary_variables": "temperature_lag_shifted temperature"

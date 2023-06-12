@@ -117,6 +117,20 @@
         "valid_max": 2000,
         "valid_min": 0
     },
+    "depth_interpolated": {
+        "comment": "Linear interpolated depth using pandas.DataFrame.interpolate",
+		"ancillary_variables": "depth",
+        "instrument": "instrument_ctd",
+        "long_name": "Interpolated Depth",
+        "observation_type": "calculated",
+        "positive": "down",
+        "precision": "2",
+        "reference_datum": "sea-surface",
+        "units": "meters",
+		"axis": "Z",
+        "valid_max": 2000,
+        "valid_min": 0
+    },
     "conductivity": {
         "comment": "Suspect/failed IOOS QC values, and values flagged by a CTD hysteresis test have been removed.",
 		"instrument": "instrument_ctd",
@@ -127,7 +141,7 @@
         "valid_max": 10,
         "valid_min": 0
     },
-	"conductivity_lag_shifted": {
+	"conductivity_combined": {
         "comment": "Conductivity corrected for thermal lag, when appropriate",
 		"ancillary_variables": "conductivity",
 		"instrument": "instrument_ctd",
@@ -147,7 +161,7 @@
         "valid_max": 40.0,
         "valid_min": -5.0
     },
-	"temperature_lag_shifted": {
+	"temperature_combined": {
         "comment": "Temperature corrected for thermal lag, when appropriate",
 		"ancillary_variables": "temperature",
 		"instrument": "instrument_ctd",
@@ -157,19 +171,9 @@
         "valid_max": 40.0,
         "valid_min": -5.0
     },
-	"temperature_combined": {
-        "comment": "Combined temperature variable, using the thermal lag shifted temperature when available, and raw temperature when a given profile was not adjusted for thermal lag",
-		"ancillary_variables": "temperature_lag_shifted temperature",
-		"instrument": "instrument_ctd",
-        "long_name": "Temperature - Thermal Lag Adjusted",
-        "standard_name": "sea_water_temperature",
-        "units": "Celsius",
-        "valid_max": 40.0,
-        "valid_min": -5.0
-    },
     "temperature_interpolated": {
-		"comment": "linear interpolated temperature used to calculate pH",
-        "ancillary_variables": "temperature_combined",
+		"comment": "linear interpolated temperature (thermal lag adjusted) used to calculate pH",
+        "ancillary_variables": "temperature_lag_shifted",
         "instrument": "instrument_ctd",
         "long_name": "Interpolated Temperature",
         "observation_type": "calculated",
@@ -189,7 +193,7 @@
         "valid_max": 40.0,
         "valid_min": 0.0
     },
-	"salinity_lag_shifted": {
+	"salinity_combined": {
         "comment": "Salinity corrected for thermal lag, when appropriate. Calculated using the gsw.SP_from_C function.",
 		"ancillary_variables": "conductivity temperature pressure",
         "instrument": "instrument_ctd",
@@ -200,20 +204,9 @@
         "valid_max": 40.0,
         "valid_min": 0.0
     },
-	"salinity_combined": {
-        "comment": "Combined salinity variable, using the thermal lag shifted salinity when available, and raw salinity when a given profile was not adjusted for thermal lag",
-		"ancillary_variables": "salinity_lag_shifted salinity",
-        "instrument": "instrument_ctd",
-        "long_name": "Salinity - Thermal Lag Adjusted",
-        "observation_type": "calculated",
-        "standard_name": "sea_water_practical_salinity",
-        "units": "1",
-        "valid_max": 40.0,
-        "valid_min": 0.0
-    },
     "salinity_interpolated": {
-		"comment": "linear interpolated salinity used to calculate pH",
-        "ancillary_variables": "salinity_combined",
+		"comment": "linear interpolated salinity (thermal lag adjusted) used to calculate pH",
+        "ancillary_variables": "salinity_lag_shifted",
         "instrument": "instrument_ctd",
         "long_name": "Interpolated Salinity",
         "observation_type": "calculated",
@@ -233,7 +226,7 @@
         "valid_max": 1015.0,
         "valid_min": 1040.0
     },
-	"density_lag_shifted": {
+	"density_combined": {
         "comment": "Density corrected for thermal lag, when appropriate. Calculated using the gsw.rho function.",
 		"ancillary_variables": "salinity temperature pressure",
         "instrument": "instrument_ctd",
@@ -244,17 +237,6 @@
         "valid_max": 1015.0,
         "valid_min": 1040.0
     },
-	"density_combined": {
-        "comment": "Combined density variable, using the thermal lag shifted density when available, and raw density when a given profile was not adjusted for thermal lag",
-		"ancillary_variables": "density_lag_shifted density",
-        "instrument": "instrument_ctd",
-        "long_name": "Density - Thermal Lag Adjusted",
-        "observation_type": "calculated",
-        "standard_name": "sea_water_density",
-        "units": "kg m-3",
-        "valid_max": 1015.0,
-        "valid_min": 1040.0
-	},
     "chlorophyll_a": {
         "instrument": "instrument_flbbcd",
         "long_name": "Chlorophyll a",
@@ -267,6 +249,7 @@
     "beta_700nm": {
         "instrument": "instrument_flbbcd",
         "long_name": "Beta 700nm at 117 degrees",
+		"comment": "Optical backscatter (wavelength 700 nm) measured at 117 degrees",
 		"measurement_angle": "117 degrees",
 		"measurement_wavelength": "700nm",
         "observation_type": "measured",
@@ -288,7 +271,7 @@
     "ph_total": {
         "ancillary_variables": "pressure_interpolated salinity_interpolated temperature_interpolated pH_reference_voltage_raw",
         "observation_type": "calculated",
-        "comment": "Calculated from sensor calibration coefficents, interpolated pressure, salinity, temperature (adjusted for thermal lag) and measured reference voltage.",
+        "comment": "Calculated from sensor calibration coefficents, interpolated pressure, interpolated salinity, interpolated temperature (adjusted for thermal lag) and measured reference voltage.",
         "source_sensor": "sci_sbe41n_ph_ref_voltage",
 		"standard_name": "sea_water_ph_reported_on_total_scale",
 		"long_name": "pH",
@@ -299,7 +282,7 @@
     "ph_total_shifted": {
         "ancillary_variables": "pressure_interpolated salinity_interpolated temperature_interpolated pH_reference_voltage_corrected",
         "observation_type": "calculated",
-        "comment": "Calculated from sensor calibration coefficents, interpolated pressure, salinity, temperature (adjusted for thermal lag) and measured reference voltage shifted by an optimal time shift calculated by glider segment in order to minimize separation between glider down and upcasts.",
+        "comment": "Calculated from sensor calibration coefficents, interpolated pressure, interpolated salinity, interpolated temperature (adjusted for thermal lag) and measured reference voltage shifted by an optimal time shift calculated by glider segment in order to minimize separation between glider down and upcasts.",
         "source_sensor": "sci_sbe41n_ph_ref_voltage",
 		"standard_name": "sea_water_ph_reported_on_total_scale",
 		"long_name": "pH",
