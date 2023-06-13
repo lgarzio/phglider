@@ -166,6 +166,13 @@ def main(coord_lims, configdir, fname, method):
     for phv in phvolts:
         ds[phv][ds[phv] == 0.0] = np.nan
 
+    # make sure oxygen values aren't unreasonable/fill values
+    for dov in ['oxygen_concentration', 'oxygen_concentration_shifted']:
+        ds[dov][ds[dov] > 1000] = np.nan
+
+    for dov in ['oxygen_saturation', 'oxygen_saturation_shifted']:
+        ds[dov][ds[dov] > 300] = np.nan
+
     # read cal file
     sn = f'sbe{ds.instrument_ph.serial_number}'
     calfile = cf.find_calfile(deploy, sn)
