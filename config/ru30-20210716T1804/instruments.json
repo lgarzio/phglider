@@ -43,6 +43,7 @@
     "instrument_optode": {
         "calibration_date": "2019-09-25",
 		"factory_calibrated": "2019-09-25",
+		"comment": "This sensor failed during deployment. Dissolved oxygen data are not available.",
 		"long_name": "Oxygen Optode",
 		"make_model": "Aanderaa Oxygen Optode 4831",
 		"platform": "platform",
