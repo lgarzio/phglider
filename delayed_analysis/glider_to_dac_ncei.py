@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 4/28/2021
-Last modified: 5/17/2023
+Last modified: 6/13/2023
 Process final glider dataset to upload to the IOOS glider DAC (https://gliders.ioos.us/) and
 NCEI OA data portal (https://www.ncei.noaa.gov/access/ocean-carbon-acidification-data-system-portal/)
 Modified from code written by Leila Belabbassi.
@@ -40,7 +40,7 @@ def make_encoding(dataset, time_start="seconds since 1970-01-01 00:00:00", fillv
     return encoding
 
 
-def main(fname):
+def main(fname, do):
     savedir = os.path.join(os.path.dirname(fname), 'ngdac')
     os.makedirs(savedir, exist_ok=True)
 
@@ -52,10 +52,15 @@ def main(fname):
                  'sbe41n_ph_ref_voltage', 'sbe41n_ph_ref_voltage_shifted', 'ph_total', 'ph_total_shifted',
                  'pressure_interpolated', 'temperature_interpolated', 'salinity_interpolated', 'depth_interpolated']
 
-    search_vars = ['chlorophyll_a', 'sci_flntu_chlor_units', 'total_alkalinity', 'aragonite_saturation_state',
-                   'beta_700nm', 'cdom', 'oxygen_concentration', 'oxygen_concentration_shifted', 'oxygen_saturation',
-                   'oxygen_saturation_shifted', 'conductivity_combined', 'temperature_combined', 'salinity_combined',
-                   'density_combined']
+    if do:
+        search_vars = ['chlorophyll_a', 'sci_flntu_chlor_units', 'total_alkalinity', 'aragonite_saturation_state',
+                       'beta_700nm', 'cdom', 'oxygen_concentration', 'oxygen_concentration_shifted',
+                       'oxygen_saturation', 'oxygen_saturation_shifted', 'conductivity_combined',
+                       'temperature_combined', 'salinity_combined', 'density_combined']
+    else:
+        search_vars = ['chlorophyll_a', 'sci_flntu_chlor_units', 'total_alkalinity', 'aragonite_saturation_state',
+                       'beta_700nm', 'cdom', 'conductivity_combined', 'temperature_combined', 'salinity_combined',
+                       'density_combined']
     for sv in search_vars:
         if sv in ds.data_vars:
             proc_vars.append(sv)
@@ -155,15 +160,17 @@ def main(fname):
                    'sbe41n_ph_ref_voltage_shifted': 'pH_reference_voltage_corrected',
                    'ph_total': 'pH_raw',
                    'ph_total_shifted': 'pH_corrected',
-                   'oxygen_concentration': 'oxygen_concentration_raw',
-                   'oxygen_concentration_shifted': 'oxygen_concentration_corrected',
-                   'oxygen_saturation': 'oxygen_saturation_raw',
-                   'oxygen_saturation_shifted': 'oxygen_saturation_corrected',
                    'conductivity_combined': 'conductivity_lag_shifted',
                    'temperature_combined': 'temperature_lag_shifted',
                    'salinity_combined': 'salinity_lag_shifted',
                    'density_combined': 'density_lag_shifted'
                    }
+    if do:
+        rename_dict.update({'oxygen_concentration': 'oxygen_concentration_raw',
+                            'oxygen_concentration_shifted': 'oxygen_concentration_corrected',
+                            'oxygen_saturation': 'oxygen_saturation_raw',
+                            'oxygen_saturation_shifted': 'oxygen_saturation_corrected'})
+
     ds = ds.rename(rename_dict)
 
     # make sure valid_min and valid_max are the same data type as the variables
@@ -208,5 +215,6 @@ def main(fname):
 
 
 if __name__ == '__main__':
-    ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/ru30-20210226T1647-profile-sci-delayed_qc.nc'
-    main(ncfile)
+    ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210716T1804/delayed/ru30-20210716T1804-profile-sci-delayed_qc.nc'
+    dissolved_oxygen = False  # use False if the DO sensor failed during the deployment
+    main(ncfile, dissolved_oxygen)
