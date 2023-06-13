@@ -64,6 +64,8 @@ The toolbox should now be installed to your conda environment.
 
 8. [glider_to_dac_ncei.py](https://github.com/lgarzio/phglider/blob/master/delayed_analysis/glider_to_dac_ncei.py): Format dataset to upload to the [IOOS glider DAC](https://gliders.ioos.us/) and [NCEI OA data portal](https://www.ncei.noaa.gov/access/ocean-carbon-acidification-data-system-portal/).
 
+9. [plot_ncei.py](https://github.com/lgarzio/phglider/blob/master/plotting/plot_ncei.py): Plot xsections of the data in the NCEI dataset before submitting files to the NCEI OA data portal.
+
 ## CTD Thermal Lag
 
 Originally written in Matlab by Daniel Wang and translated to Python by Jack Slater at the Virginia Institute of Marine Science. Code adapted for pH glider datasets.

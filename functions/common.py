@@ -208,8 +208,15 @@ def plot_vars_delayed():
 
 def plot_vars_ncei():
     plt_vars = {'conductivity': {'cmap': 'jet', 'ttl': 'Conductivity (S m-1)'},
+                'conductivity_lag_shifted': {'cmap': 'jet', 'ttl': 'Conductivity lag shifted (S m-1)'},
                 'temperature': {'cmap': cmo.cm.thermal, 'ttl': 'Temperature ({})'.format(r'$\rm ^oC$')},
+                'temperature_lag_shifted': {'cmap': cmo.cm.thermal, 'ttl': 'Temperature lag shifted ({})'.format(r'$\rm ^oC$')},
+                'temperature_interpolated': {'cmap': cmo.cm.thermal, 'ttl': 'Temperature interpolated ({})'.format(r'$\rm ^oC$')},
                 'salinity': {'cmap': cmo.cm.haline, 'ttl': 'Salinity'},
+                'salinity_lag_shifted': {'cmap': cmo.cm.haline, 'ttl': 'Salinity lag shifted'},
+                'salinity_interpolated': {'cmap': cmo.cm.haline, 'ttl': 'Salinity interpolated'},
+                'density': {'cmap': cmo.cm.dense, 'ttl': 'Density'},
+                'density_lag_shifted': {'cmap': cmo.cm.dense, 'ttl': 'Density lag shifted'},
                 'chlorophyll_a': {'cmap': cmo.cm.algae, 'ttl': 'Chlorophyll ({}g/L)'.format(chr(956))},
                 'oxygen_concentration_corrected': {'cmap': cmo.cm.oxy, 'ttl': 'Oxygen (umol/L)'},
                 'oxygen_saturation_corrected': {'cmap': cmo.cm.oxy, 'ttl': 'Oxygen Saturation (percent)'},

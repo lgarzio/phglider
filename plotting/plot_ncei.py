@@ -3,7 +3,7 @@
 """
 Author: Lori Garzio on 8/10/2021
 Last modified: 8/10/2021
-Plot data variables from the dataset that will be sent to the IOOS Glider DAC
+Plot data variables that will be sent to the IOOS Glider DAC and NCEI OA Data portal
 """
 
 import os
@@ -16,9 +16,9 @@ import functions.plotting as pf
 plt.rcParams.update({'font.size': 13})
 
 
-def main(fname):
+def main(fname, savedir):
     ds = xr.open_dataset(fname)
-    save_dir = os.path.join(os.path.dirname(fname), 'ncei_plots')
+    save_dir = os.path.join(savedir, 'ncei_plots')
     os.makedirs(save_dir, exist_ok=True)
     deploy = ds.attrs['title']
 
@@ -53,5 +53,6 @@ def main(fname):
 
 
 if __name__ == '__main__':
-    ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/ncei/ru30-20210226T1647-delayed.nc'
-    main(ncfile)
+    ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210503T1929/delayed/ncei/ru30-20210503T1929-delayed.nc'
+    save = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210503T1929/delayed/plots'
+    main(ncfile, save)
