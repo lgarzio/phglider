@@ -20,8 +20,8 @@ plt.rcParams.update({'font.size': 12})
 pd.set_option('display.width', 320, "display.max_columns", 15)  # for display in pycharm console
 
 
-def main(fname):
-    save_dir = os.path.join(os.path.dirname(fname), 'compare_glider_discrete')
+def main(fname, tdelta):
+    save_dir = os.path.join(os.path.dirname(fname), 'compare_glider_discrete_time')
     os.makedirs(save_dir, exist_ok=True)
 
     summary_headers = ['deployment_recovery', 'glider_date', 'discrete_date', 'time_difference_minutes',
@@ -74,11 +74,12 @@ def main(fname):
 
     ds = xr.open_dataset(fname)
     ds = ds.sortby(ds.time)
+    ds = ds.swap_dims({'time': 'profile_time'})
     filename = fname.split('/')[-1]
     deploy = f'{filename.split("-")[0]}-{filename.split("-")[1]}'
     df2 = df.loc[df['deployment'] == deploy]
 
-    plt_vars = ['ph', 'salinity', 'temperature']
+    plt_vars = ['chlorophyll_a', 'ph', 'salinity', 'temperature']
     for dr in np.unique(df2['type']):
         df_dr = df2.loc[df2['type'] == dr]
         for sample_time in np.unique(df_dr['date_time']):
@@ -93,54 +94,32 @@ def main(fname):
                 slon = np.round(sample_lon[0], 4)
                 sample_meta = f'Sample: {st_str}, location {[slat, slon]}'
 
-                # find the closest glider profile to the sample collection
-                data = dict(glat=ds.profile_lat.values, glon=ds.profile_lon.values,
-                            slat=np.repeat(slat, len(ds.profile_lat.values)),
-                            slon=np.repeat(slon, len(ds.profile_lat.values)))
-                df = pd.DataFrame(data)
-                df.drop_duplicates(inplace=True)
+                # subset glider data surrounding water sampling time
+                t0 = pd.to_datetime(sample_time) - dt.timedelta(hours=tdelta)
+                t1 = pd.to_datetime(sample_time) + dt.timedelta(hours=tdelta)
 
-                # calculate distances from each glider profile to sample location
-                geod = Geodesic.WGS84
-                distances = np.array([])
-                for ii, row in df.iterrows():
-                    g = geod.Inverse(row.glat, row.glon, row.slat, row.slon)
-                    distances = np.append(distances, g['s12'])
-
-                # find the smallest distance
-                idx = distances.argmin()
-                plat = df.iloc[idx].glat
-                plat_idx = np.where(ds.profile_lat.values == plat)[0]
-
-                # subset the data
-                dss = ds.isel(time=plat_idx)
-
-                # determine if the glider profile is ascending or descending to grab the corresponding profile
-                d0 = np.nanmedian(dss.depth.values[0:10])
-                d1 = np.nanmedian(dss.depth.values[-10:-1])
-
-                if d0 < d1:  # descending profile, grab the next profile to complete the pair
-                    idx2 = idx + 1
-                else:  # ascending profile, grab the previous profile to complete the pair
-                    idx2 = idx - 1
-                plat2 = df.iloc[idx2].glat
-                plat_idx2 = np.where(np.logical_or(ds.profile_lat.values == plat, ds.profile_lat.values == plat2))[0]
-
-                # subset the data again to get the down-up profile pair
-                dss = ds.isel(time=plat_idx2)
+                dss = ds.sel(profile_time=slice(t0, t1))
 
                 dss_t0 = pd.to_datetime(np.nanmin(dss.time.values))
+                dss_t1 = pd.to_datetime(np.nanmax(dss.time.values))
 
                 # glider metadata
                 dss_t0str = pd.to_datetime(dss_t0).strftime('%Y-%m-%dT%H:%M')
+                dss_t1str = pd.to_datetime(dss_t1).strftime('%Y-%m-%dT%H:%M')
+                dss_t0savestr = pd.to_datetime(dss_t0).strftime('%Y%m%dT%H%M')
+                dss_t1savestr = pd.to_datetime(dss_t1).strftime('%Y%m%dT%H%M')
                 gllat = np.round(np.unique(dss.profile_lat.values[0]), 4)[0]
                 gllon = np.round(np.unique(dss.profile_lon.values[0]), 4)[0]
-                glider_meta = f'Glider profile: {dss_t0str}, location {[gllat, gllon]}'
+                glider_meta = f'Glider profiles: {dss_t0str} to {dss_t1str},\nlocation {[gllat, gllon]}'
 
                 # differences between glider and samples - distance and time
-                diff_loc_meters = np.round(distances[idx], 2)
+                glat = np.nanmean(dss.latitude.values)
+                glon = np.nanmean(dss.longitude.values)
+                geod = Geodesic.WGS84
+                g = geod.Inverse(glat, glon, slat, slon)
+                diff_loc_meters = np.round(g['s12'], 2)
                 diff_mins = np.round(abs(dss_t0 - pd.to_datetime(sample_time)).seconds / 60, 2)
-                diff_meta = f'Difference: {diff_mins} minutes, {diff_loc_meters} meters'
+                diff_meta = f'Distance: {diff_loc_meters} meters'
 
                 for pv in plt_vars:
                     # get the discrete water sample data
@@ -151,12 +130,15 @@ def main(fname):
                         sample = df_drt['sal']
                     elif pv == 'temperature':
                         sample = df_drt['temp_c']
+                    elif pv == 'chlorophyll_a':
+                        sample = np.repeat(np.nan, len(sample_pressure))
 
                     fig, ax = plt.subplots(figsize=(8, 10))
 
                     # plot glider data
                     if pv == 'ph':
-                        glider_vars = ['ph_total', 'ph_total_shifted']
+                        #glider_vars = ['ph_total', 'ph_total_shifted']
+                        glider_vars = ['ph_total_shifted']
                     else:
                         glider_vars = [pv]
                     colors = ['tab:blue', 'tab:green']
@@ -164,9 +146,10 @@ def main(fname):
                         glider_data = dss[variable]
                         ax.scatter(glider_data, dss.pressure_interpolated, c=colors[i], label=f'glider {variable}')
 
-                    # plot water sample data
-                    ax.scatter(sample.astype(float), sample_pressure.astype(float), c='tab:red', ec='k', s=70,
-                               label='water samples')
+                    if pv != 'chlorophyll_a':
+                        # plot water sample data
+                        ax.scatter(sample.astype(float), sample_pressure.astype(float), c='tab:red', ec='k', s=70,
+                                   label='water samples')
 
                     ax.legend()
                     if pv == 'ph':
@@ -178,15 +161,17 @@ def main(fname):
                     elif pv == 'temperature':
                         xlims = [14.75, 25.25]
                         xlab = 'Temperature (degrees C)'
+                    elif pv == 'chlorophyll_a':
+                        xlab = 'Chlorophyll a (ug/L)'
 
-                    plt.ylim(0, 16)
+                    #plt.ylim(0, 16)
                     #plt.xlim(xlims)
                     ax.set_xlabel(xlab)
                     ax.invert_yaxis()
                     ax.set_ylabel('Pressure (dbar)')
                     ax.set_title(f'Glider {dr.capitalize()}\n{sample_meta}\n{glider_meta}\n{diff_meta}')
 
-                    sfilename = f'{deploy}_discrete_comparison_{dr}_{st_save_str}_{pv}.png'
+                    sfilename = f'{deploy}_discrete_comparison_{dr}_{dss_t0savestr}-{dss_t1savestr}_{pv}.png'
                     sfile = os.path.join(save_dir, sfilename)
                     plt.savefig(sfile, dpi=300)
                     plt.close()
@@ -197,10 +182,10 @@ def main(fname):
                     sdf = df_drt.loc[df_drt['pressure_dbar'] == dpu]
                     discrete_pressure = np.nanmedian(sdf.pressure_dbar)
                     if discrete_pressure < 1:
-                        gl_pressure_idx = np.where(dss.pressure_interpolated < 3)[0]
+                        gl_pressure_idx = np.where(dss.pressure_interpolated < 2)[0]
                     else:
-                        press1 = discrete_pressure - 1.5
-                        press2 = discrete_pressure + 1.5
+                        press1 = discrete_pressure - 1
+                        press2 = discrete_pressure + 1
                         gl_pressure_idx = np.where(np.logical_and(dss.pressure_interpolated > press1,
                                                                   dss.pressure_interpolated < press2))[0]
                     gl_pressure = np.round(np.nanmedian(dss.pressure_interpolated[gl_pressure_idx]), 3)
@@ -230,5 +215,6 @@ def main(fname):
 
 
 if __name__ == '__main__':
-    ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210226T1647/delayed/ru30-20210226T1647-profile-sci-delayed_qc.nc'
-    main(ncfile)
+    ncfile = '/Users/garzio/Documents/rucool/Saba/gliderdata/2022/maracoos_02-20220420T2011/delayed/maracoos_02-20220420T2011-profile-sci-delayed_qc.nc'
+    time_delta = .25  # in hours
+    main(ncfile, time_delta)
