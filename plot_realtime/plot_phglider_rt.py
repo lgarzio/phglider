@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 3/2/2021
-Last modified: 5/12/2023
+Last modified: 8/7/2023
 Plot realtime pH glider data variables: seawater temperature, salinity, chlorophyll, dissolved oxygen, pH reference
 voltage, and pH (not corrected for time lag)
 """
@@ -99,7 +99,10 @@ def main(args):
                 'ph': {'var': df.ph_total.values, 'axes': ax6, 'cmap': cmo.cm.matter, 'ttl': 'pH (uncorrected)'}
                 }
     for pv, info in plt_vars.items():
-        xc = info['axes'].scatter(tm, depth, c=info['var'], cmap=info['cmap'], s=10, edgecolor='None')
+        if pv == 'oxy':
+            xc = info['axes'].scatter(tm, depth, c=info['var'], vmin=0, vmax=10, cmap=info['cmap'], s=10, edgecolor='None')
+        else:
+            xc = info['axes'].scatter(tm, depth, c=info['var'], cmap=info['cmap'], s=10, edgecolor='None')
 
         info['axes'].set_title(info['ttl'], fontsize=18)
 
