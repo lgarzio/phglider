@@ -2,14 +2,16 @@
 
 """
 Authors: Daniel Wang and Jack Slater, Virginia Institute of Marine Science
+Updated by L Garzio on 8/8/2023
 CTD thermal lag correction functions
 """
 
 import numpy as np
 from scipy.interpolate import interp1d
 import gsw
-import shapely.geometry as spg
 import scipy.optimize as scop
+from shapely.geometry import Polygon, MultiPolygon
+from shapely.ops import polygonize
 
 
 def correct_sensor_lag(timestamp, raw, params, flow=0):
@@ -263,10 +265,24 @@ def find_thermal_lag_params_sp(time1, cond1, temp1, pres1, thermocline_pres1, ti
 
         points = np.concatenate([salt[:, None], pres[:, None]], axis=1)
 
-        outline = spg.Polygon(points)
-        area = outline.area
+        # updated to deal correctly with self-intersecting polygons
+        # outline = spg.Polygon(points)
+        # area = outline.area
+        # return area
+        polygon_points = points.tolist()
+        polygon_points.append(polygon_points[0])
+        polygon = Polygon(polygon_points)
+        polygon_lines = polygon.exterior
+        polygon_crossovers = polygon_lines.intersection(polygon_lines)
+        polygons = polygonize(polygon_crossovers)
+        valid_polygons = MultiPolygon(polygons)
 
-        return area
+        profile_area = 0
+
+        for polygon in list(valid_polygons.geoms):
+            profile_area += polygon.area
+
+        return profile_area
 
     params_guess = [0.0677, 11.1431]  # [alpha, tau] for GPCTD
     params = scop.minimize(optimobjArea, params_guess, method='SLSQP', tol=1e-4)
@@ -352,10 +368,24 @@ def find_thermal_lag_params_ts(time1, cond1, temp1, pres1, time2, cond2, temp2, 
 
         points = np.concatenate([salt[:, None], temp[:, None]], axis=1)
 
-        outline = spg.Polygon(points)
-        area = outline.area
+        # updated to deal correctly with self-intersecting polygons
+        # outline = spg.Polygon(points)
+        # area = outline.area
+        # return area
+        polygon_points = points.tolist()
+        polygon_points.append(polygon_points[0])
+        polygon = Polygon(polygon_points)
+        polygon_lines = polygon.exterior
+        polygon_crossovers = polygon_lines.intersection(polygon_lines)
+        polygons = polygonize(polygon_crossovers)
+        valid_polygons = MultiPolygon(polygons)
 
-        return area
+        profile_area = 0
+
+        for polygon in list(valid_polygons.geoms):
+            profile_area += polygon.area
+
+        return profile_area
 
     params_guess = [0.0677, 11.1431]  # [alpha, tau] for GPCTD
     params = scop.minimize(optimobjArea, params_guess, method='SLSQP', tol=1e-4)
