@@ -461,6 +461,8 @@ def apply_thermal_lag(glider_sci, save_profile_stats=False):
                     group['ptemp_outside'] = ptemp_outside1  # corrected potential temperature
                     group['rho_outside'] = rho_outside1  # in-situ density
                     group['sigma0_outside'] = sigma0_outside1  # potential density anomaly
+
+                    profile_stats.loc[profile_id, 'thermal_lag_applied'] = profile_stats.loc[profile_id, 'thermal_lag_flag']
                 else:
                     profile_stats.loc[profile_id, 'thermal_lag_applied'] = 0
                     profile_stats.loc[profile_id, 'comment'] = 'Required data not available to calculate thermal lag'
