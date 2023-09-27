@@ -1,0 +1,57 @@
+{
+    "platform": {
+        "depth_rating": "200m",
+		"glider_type": "Teledyne Webb Research Slocum G2 glider",
+		"id": "ru30",
+		"instrument": "instrument_ctd,instrument_ph,instrument_flbbcdslc,instrument_azfp",
+		"long_name": "Slocum Glider ru30",
+		"os_version": "8.5",
+		"type": "platform",
+		"wmo_id": "4801946"
+    },
+	"instrument_ctd": {
+        "calibration_date": "2022-06-19",
+		"comment": "Pumped",
+		"factory_calibrated": "2022-06-19",
+		"long_name": "Conductivity, Temperature, Depth (CTD) Sensor",
+		"make_model": "Sea-Bird GPCTD",
+		"platform": "platform",
+		"serial_number": "9417P",
+		"owner": "Rutgers University",
+		"type": "instrument"
+    },
+    "instrument_flbbcd": {
+		"calibration_date": "2018-10-16",
+		"comment": "Chlorophyll a, beta700nm, CDOM",
+		"factory_calibrated": "2018-10-16",
+		"long_name": "ECO Triplet Puck",
+		"make_model": "Sea-Bird ECO Triplet flbbcdslc",
+		"platform": "platform",
+		"serial_number": "4653",
+		"owner": "Rutgers University",
+		"type": "instrument"
+    },
+    "instrument_azfp": {
+        "calibration_date": "2017-10-24",
+		"factory_calibrated": "2017-10-24",
+		"comment": "ASL Environmental Sciences Acoustic Zooplankton Fish Profiler (AZFP) Echosounder 38, 125, 200 kHz",
+		"long_name": "AZFP",
+		"make_model": "ASL AZFP-M",
+		"platform": "platform",
+		"serial_number": "59006",
+		"owner": "Rutgers University",
+		"type": "instrument"
+    },
+    "instrument_ph": {
+        "calibration_date": "2022-07-20",
+		"calibration_coefficients": " ",
+		"comment": "V2",
+		"factory_calibrated": "2022-07-20",
+		"long_name": "Deep ISFET Ocean pH Sensor",
+		"make_model": "Sea-Bird Deep ISFET Ocean pH Sensor",
+		"platform": "platform",
+		"serial_number": "C18",
+		"owner": "Rutgers University",
+		"type": "instrument"
+    }
+}
