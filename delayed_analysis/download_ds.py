@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 4/2/2021
-Last modified: 1/19/2023
+Last modified: 1/23/2024
 Download a user-specified pH glider netCDF dataset from RUCOOL's glider ERDDAP server and save to a local directory
 """
 
@@ -26,7 +26,8 @@ def main(deploy, sdir):
                     'ctd41cp_timestamp']]
 
     search_str = ['_qartod_summary_flag', 'instrument_', 'ph_ref_voltage', 'oxygen_', 'chlorophyll_a',
-                  '_hysteresis_test', 'beta_700nm', 'cdom', 'depth_interpolated']
+                  '_hysteresis_test', 'beta_700nm', 'cdom', 'depth_interpolated', 'pressure_qartod_pressure_test',
+                  'platform', 'pH']
     for ss in search_str:
         append_vars = [x for x in ds_vars if ss in x]
         if search_str == 'chlorophyll_a':
@@ -45,6 +46,6 @@ def main(deploy, sdir):
 
 
 if __name__ == '__main__':
-    deployment = 'maracoos_02-20220420T2011-profile-sci-delayed'
-    savedir = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/maracoos_02-20220420T2011/delayed'
+    deployment = 'ru39-20230420T1636-profile-sci-delayed'
+    savedir = '/Users/garzio/Documents/rucool/Saba/gliderdata/2023/ru39-20230420T1636/delayed'
     main(deployment, savedir)
