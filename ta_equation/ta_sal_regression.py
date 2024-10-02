@@ -5,12 +5,14 @@ Author: Lori Garzio on 4/6/2021
 Last modified: 10/2/2024
 Modified from MATLAB code written by Liza Wright-Fairbanks.
 Calculate the linear relationship between Total Alkalinity and salinity from in-situ water sampling data taken during
-glider deployment and recovery (for nearshore samples = lower salinity region) and historical ECOA water sampling data
-(for the offshore = higher salinity region).
+glider deployment and recovery (for nearshore samples = lower salinity region) and historical vessel-based water
+sampling data (for the offshore = higher salinity region).
 In-situ TA data are in units of umol/kg.
-ECOA discrete data comes from discrete sample TA analysis during the 2015 East Coast Ocean Acidification cruise.
-Samples were collected along 3 lines on the Mid-Atlantic shelf. Only ECOA samples taken at depths shallower than 200 m
-are included (max glider depth)
+Vessel-based data comes from discrete sample TA analysis during vessel-based oceanographic cruises. Data were taken from
+the CODAP-NA dataset (documented here: https://essd.copernicus.org/articles/13/2777/2021/), and more recent datasets
+from ECOMON and ECOA cruises were downloaded from the NCEI OCADs data portal
+(https://www.ncei.noaa.gov/products/ocean-carbon-acidification-data-system). Data for this analysis were restricted
+to a defined bounding box spanning only the New York Bight and limited to 200m depth (max glider depth)
 """
 import os
 import pandas as pd

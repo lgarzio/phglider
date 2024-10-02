@@ -62,6 +62,6 @@ def main(file, savedir):
 
 
 if __name__ == '__main__':
-    file = '/Users/garzio/Documents/rucool/Saba/TA_salinity_regressions/vessel-based-data/vessel_based_TA_salinity_NYB_20240918.nc'
+    file = '/Users/garzio/Documents/rucool/Saba/TA_salinity_regressions/vessel-based-data/vessel_based_TA_salinity_NYB_20241002.nc'
     save_directory = '/Users/garzio/Documents/rucool/Saba/TA_salinity_regressions/vessel-based-data'
     main(file, save_directory)

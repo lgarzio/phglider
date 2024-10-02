@@ -2,9 +2,12 @@
 
 """
 Author: Lori Garzio on 10/18/2021
-Last modified: 9/18/2024
-Grab salinity and TA data from CODAP-NA and additional ECOMON and ECOA datasets. Export as NetCDF to use for TA-salinity
-regressions. CODAP-NA dataset documented here: https://essd.copernicus.org/articles/13/2777/2021/
+Last modified: 10/2/2024
+Grab vessel-based salinity and TA data from CODAP-NA and additional ECOMON and ECOA datasets within a defined
+bounding box spanning only the New York Bight and limited to 200m depth (max glider depth). QC flags were applied (when
+provided). Export as NetCDF and csv to use for TA-salinity regressions for estimating glider-based Total Alkalinity.
+CODAP-NA dataset documented here: https://essd.copernicus.org/articles/13/2777/2021/
+Additional cruise datasets were downloaded from the NCEI OCADs data portal (https://www.ncei.noaa.gov/products/ocean-carbon-acidification-data-system)
 """
 
 import os
@@ -167,6 +170,9 @@ def main(lon_bounds, lat_bounds, codap_file, ecomon_files, ecomon_files2, ecoa_f
     df = df[df.recommended_Salinity_flag != 3]
     df = df[df.recommended_Salinity_flag != 9]
 
+    # remove data >200m depth
+    df = df[df.Depth <= 200]
+
     # add data to dictionary
     data['coords']['time']['data'] = np.array(df.time)
     data['data_vars']['data_source']['data'] = np.repeat('CODAP_NA_v2021', len(df.time))
@@ -195,36 +201,39 @@ def main(lon_bounds, lat_bounds, codap_file, ecomon_files, ecomon_files2, ecoa_f
                                   'HB2204': 288996
                                   }
     for ef in ecomon_files:
-        df_ecomon = pd.read_csv(ef)
+        df = pd.read_csv(ef)
 
         # remove questionable (3) bad (4) and missing (5 or 9 or -999) TA
-        df_ecomon = df_ecomon[df_ecomon.TA_Flag != 3]
-        df_ecomon = df_ecomon[df_ecomon.TA_Flag != 4]
-        df_ecomon = df_ecomon[df_ecomon.TA_Flag != 5]
-        df_ecomon = df_ecomon[df_ecomon.TA_Flag != 9]
-        df_ecomon = df_ecomon[df_ecomon.TA_Flag != -999]
+        df = df[df.TA_Flag != 3]
+        df = df[df.TA_Flag != 4]
+        df = df[df.TA_Flag != 5]
+        df = df[df.TA_Flag != 9]
+        df = df[df.TA_Flag != -999]
 
         # remove missing salinity
         try:
-            df_ecomon = df_ecomon[df_ecomon.CTDSAL_PSS78 != -999]
+            df = df[df.CTDSAL_PSS78 != -999]
         except AttributeError:
-            df_ecomon = df_ecomon[df_ecomon['CTDSAL (PSS-78)'] != -999]
+            df = df[df['CTDSAL (PSS-78)'] != -999]
+
+        # remove data >200m depth
+        try:
+            df = df[df.Depth_meters <= 200]
+        except AttributeError:
+            df = df[df['Depth_sampling (M)'] <= 200]
 
         # format date
         try:
-            df_ecomon['year'] = df_ecomon['Year_UTC'].apply(int)
-            df_ecomon['month'] = df_ecomon['Month_UTC'].apply(int)
-            df_ecomon['day'] = df_ecomon['Day_UTC'].apply(int)
-            df_ecomon['time'] = pd.to_datetime(df_ecomon[['year', 'month', 'day']])
+            df['year'] = df['Year_UTC'].apply(int)
+            df['month'] = df['Month_UTC'].apply(int)
+            df['day'] = df['Day_UTC'].apply(int)
+            df['time'] = pd.to_datetime(df[['year', 'month', 'day']])
         except KeyError:
-            df_ecomon['time'] = pd.to_datetime(df_ecomon['Date_UTC'])
-
-        # remove flow-thru data, only use Niskin sampling
-        # df_ecomon = df_ecomon[df_ecomon.Observation_Type == 'Niskin']
+            df['time'] = pd.to_datetime(df['Date_UTC'])
 
         # make sure the data are within the defined extent
-        df_ecomon['in_region'] = ''
-        for i, row in df_ecomon.iterrows():
+        df['in_region'] = ''
+        for i, row in df.iterrows():
             try:
                 lon = row.Longitude_Dec_Deg
                 lat = row.Latitude_Dec_Deg
@@ -232,42 +241,42 @@ def main(lon_bounds, lat_bounds, codap_file, ecomon_files, ecomon_files2, ecoa_f
                 lon = row.Longitude
                 lat = row.Latitude
             if Polygon(list(zip(lon_bounds, lat_bounds))).contains(Point(lon, lat)):
-                df_ecomon.loc[i, 'in_region'] = 'yes'
+                df.loc[i, 'in_region'] = 'yes'
             else:
-                df_ecomon.loc[i, 'in_region'] = 'no'
+                df.loc[i, 'in_region'] = 'no'
 
         # drop data if it's not in the region specified
-        df_ecomon = df_ecomon[df_ecomon.in_region == 'yes']
+        df = df[df.in_region == 'yes']
 
         # add data to dictionary
-        if len(df_ecomon) > 0:
-            data['coords']['time']['data'] = np.append(data['coords']['time']['data'], np.array(df_ecomon.time))
-            data['data_vars']['data_source']['data'] = np.append(data['data_vars']['data_source']['data'], np.repeat('ECOMON-NCEI', len(df_ecomon.time)))
-            data['data_vars']['cruise']['data'] = np.append(data['data_vars']['cruise']['data'], np.array(df_ecomon.Cruise_ID))
-            data['data_vars']['obs_type']['data'] = np.append(data['data_vars']['obs_type']['data'], np.array(df_ecomon.Observation_Type))
-            cruise_accession = accession_mapping[np.unique(df_ecomon.Cruise_ID)[0]]
-            data['data_vars']['accession']['data'] = np.append(data['data_vars']['accession']['data'], np.repeat(cruise_accession, len(df_ecomon.time)))
+        if len(df) > 0:
+            data['coords']['time']['data'] = np.append(data['coords']['time']['data'], np.array(df.time))
+            data['data_vars']['data_source']['data'] = np.append(data['data_vars']['data_source']['data'], np.repeat('ECOMON-NCEI', len(df.time)))
+            data['data_vars']['cruise']['data'] = np.append(data['data_vars']['cruise']['data'], np.array(df.Cruise_ID))
+            data['data_vars']['obs_type']['data'] = np.append(data['data_vars']['obs_type']['data'], np.array(df.Observation_Type))
+            cruise_accession = accession_mapping[np.unique(df.Cruise_ID)[0]]
+            data['data_vars']['accession']['data'] = np.append(data['data_vars']['accession']['data'], np.repeat(cruise_accession, len(df.time)))
             try:
-                data['data_vars']['depth']['data'] = np.append(data['data_vars']['depth']['data'], np.array(df_ecomon.Depth_meters))
-                data['data_vars']['lat']['data'] = np.append(data['data_vars']['lat']['data'], np.array(df_ecomon.Latitude_Dec_Deg))
-                data['data_vars']['lon']['data'] = np.append(data['data_vars']['lon']['data'], np.array(df_ecomon.Longitude_Dec_Deg))
-                data['data_vars']['salinity']['data'] = np.append(data['data_vars']['salinity']['data'], np.array(df_ecomon.CTDSAL_PSS78))
-                data['data_vars']['total_alkalinity']['data'] = np.append(data['data_vars']['total_alkalinity']['data'], np.array(df_ecomon['TA_umol/kg']))
+                data['data_vars']['depth']['data'] = np.append(data['data_vars']['depth']['data'], np.array(df.Depth_meters))
+                data['data_vars']['lat']['data'] = np.append(data['data_vars']['lat']['data'], np.array(df.Latitude_Dec_Deg))
+                data['data_vars']['lon']['data'] = np.append(data['data_vars']['lon']['data'], np.array(df.Longitude_Dec_Deg))
+                data['data_vars']['salinity']['data'] = np.append(data['data_vars']['salinity']['data'], np.array(df.CTDSAL_PSS78))
+                data['data_vars']['total_alkalinity']['data'] = np.append(data['data_vars']['total_alkalinity']['data'], np.array(df['TA_umol/kg']))
             except AttributeError:  # column names changed
-                data['data_vars']['depth']['data'] = np.append(data['data_vars']['depth']['data'], np.array(df_ecomon['Depth_sampling (M)']))
-                data['data_vars']['lat']['data'] = np.append(data['data_vars']['lat']['data'], np.array(df_ecomon.Latitude))
-                data['data_vars']['lon']['data'] = np.append(data['data_vars']['lon']['data'], np.array(df_ecomon.Longitude))
-                data['data_vars']['salinity']['data'] = np.append(data['data_vars']['salinity']['data'], np.array(df_ecomon['CTDSAL (PSS-78)']))
-                data['data_vars']['total_alkalinity']['data'] = np.append(data['data_vars']['total_alkalinity']['data'], np.array(df_ecomon['TA (umol/kg)']))
+                data['data_vars']['depth']['data'] = np.append(data['data_vars']['depth']['data'], np.array(df['Depth_sampling (M)']))
+                data['data_vars']['lat']['data'] = np.append(data['data_vars']['lat']['data'], np.array(df.Latitude))
+                data['data_vars']['lon']['data'] = np.append(data['data_vars']['lon']['data'], np.array(df.Longitude))
+                data['data_vars']['salinity']['data'] = np.append(data['data_vars']['salinity']['data'], np.array(df['CTDSAL (PSS-78)']))
+                data['data_vars']['total_alkalinity']['data'] = np.append(data['data_vars']['total_alkalinity']['data'], np.array(df['TA (umol/kg)']))
 
     # ECOMON underway flow through data
     for ef in ecomon_files2:
-        df_ecomon = pd.read_csv(ef)
-        df_ecomon['time'] = df_ecomon['DATE_UTC (yyyymmdd)'].map(lambda t: pd.to_datetime(str(t)))
+        df = pd.read_csv(ef)
+        df['time'] = df['DATE_UTC (yyyymmdd)'].map(lambda t: pd.to_datetime(str(t)))
 
         # make sure the data are within the defined extent
-        df_ecomon['in_region'] = ''
-        for i, row in df_ecomon.iterrows():
+        df['in_region'] = ''
+        for i, row in df.iterrows():
             try:
                 lon = row.LONGITUDE
                 lat = row.LATITUDE
@@ -275,130 +284,133 @@ def main(lon_bounds, lat_bounds, codap_file, ecomon_files, ecomon_files2, ecoa_f
                 lon = row.Longitude
                 lat = row.Latitude
             if Polygon(list(zip(lon_bounds, lat_bounds))).contains(Point(lon, lat)):
-                df_ecomon.loc[i, 'in_region'] = 'yes'
+                df.loc[i, 'in_region'] = 'yes'
             else:
-                df_ecomon.loc[i, 'in_region'] = 'no'
+                df.loc[i, 'in_region'] = 'no'
 
         # drop data if it's not in the region specified
-        df_ecomon = df_ecomon[df_ecomon.in_region == 'yes']
+        df = df[df.in_region == 'yes']
 
         # add data to dictionary
-        if len(df_ecomon) > 0:
-            data['coords']['time']['data'] = np.append(data['coords']['time']['data'], np.array(df_ecomon.time))
+        if len(df) > 0:
+            data['coords']['time']['data'] = np.append(data['coords']['time']['data'], np.array(df.time))
             data['data_vars']['data_source']['data'] = np.append(data['data_vars']['data_source']['data'],
-                                                                 np.repeat('ECOMON-NCEI', len(df_ecomon.time)))
+                                                                 np.repeat('ECOMON-NCEI', len(df.time)))
             data['data_vars']['cruise']['data'] = np.append(data['data_vars']['cruise']['data'],
-                                                            np.array(df_ecomon.CRUISE_ID))
+                                                            np.array(df.CRUISE_ID))
             data['data_vars']['obs_type']['data'] = np.append(data['data_vars']['obs_type']['data'],
-                                                              np.repeat('underway', len(df_ecomon.time)))
-            cruise_accession = accession_underway_mapping[np.unique(df_ecomon.CRUISE_ID)[0]]
+                                                              np.repeat('underway', len(df.time)))
+            cruise_accession = accession_underway_mapping[np.unique(df.CRUISE_ID)[0]]
             data['data_vars']['accession']['data'] = np.append(data['data_vars']['accession']['data'],
-                                                               np.repeat(cruise_accession, len(df_ecomon.time)))
+                                                               np.repeat(cruise_accession, len(df.time)))
 
             data['data_vars']['depth']['data'] = np.append(data['data_vars']['depth']['data'],
-                                                           np.repeat(5, len(df_ecomon.time)))
+                                                           np.repeat(5, len(df.time)))
             data['data_vars']['lat']['data'] = np.append(data['data_vars']['lat']['data'],
-                                                         np.array(df_ecomon.LATITUDE))
+                                                         np.array(df.LATITUDE))
             data['data_vars']['lon']['data'] = np.append(data['data_vars']['lon']['data'],
-                                                         np.array(df_ecomon.LONGITUDE))
+                                                         np.array(df.LONGITUDE))
             data['data_vars']['salinity']['data'] = np.append(data['data_vars']['salinity']['data'],
-                                                              np.array(df_ecomon.SSS))
+                                                              np.array(df.SSS))
             data['data_vars']['total_alkalinity']['data'] = np.append(data['data_vars']['total_alkalinity']['data'],
-                                                                      np.array(df_ecomon.TA))
+                                                                      np.array(df.TA))
 
     # additional ECOA datasets that aren't included in CODAP
     for ef in ecoa_files:
-        df_ecoa = pd.read_csv(ef)
+        df = pd.read_csv(ef)
 
         # remove questionable (3) bad (4) and missing (9) TA
-        df_ecoa = df_ecoa[df_ecoa.TA_flag != 3]
-        df_ecoa = df_ecoa[df_ecoa.TA_flag != 4]
-        df_ecoa = df_ecoa[df_ecoa.TA_flag != -999]
+        df = df[df.TA_flag != 3]
+        df = df[df.TA_flag != 4]
+        df = df[df.TA_flag != -999]
 
         # remove missing salinity
-        df_ecoa = df_ecoa[df_ecoa.CTDSAL_PSS78_flag != -999]
+        df = df[df.CTDSAL_PSS78_flag != -999]
+
+        # remove data >200m depth
+        df = df[df.Depth <= 200]
 
         # format date
-        df_ecoa['year'] = df_ecoa['Year_UTC'].apply(int)
-        df_ecoa['month'] = df_ecoa['Month_UTC'].apply(int)
-        df_ecoa['day'] = df_ecoa['Day_UTC'].apply(int)
-        df_ecoa['time'] = pd.to_datetime(df_ecoa[['year', 'month', 'day']])
+        df['year'] = df['Year_UTC'].apply(int)
+        df['month'] = df['Month_UTC'].apply(int)
+        df['day'] = df['Day_UTC'].apply(int)
+        df['time'] = pd.to_datetime(df[['year', 'month', 'day']])
 
         # make sure the data are within the defined extent
-        df_ecoa['in_region'] = ''
-        for i, row in df_ecoa.iterrows():
+        df['in_region'] = ''
+        for i, row in df.iterrows():
             if Polygon(list(zip(lon_bounds, lat_bounds))).contains(Point(row.Longitude, row.Latitude)):
-                df_ecoa.loc[i, 'in_region'] = 'yes'
+                df.loc[i, 'in_region'] = 'yes'
             else:
-                df_ecoa.loc[i, 'in_region'] = 'no'
+                df.loc[i, 'in_region'] = 'no'
 
         # drop data if it's not in the region specified
-        df_ecoa = df_ecoa[df_ecoa.in_region == 'yes']
+        df = df[df.in_region == 'yes']
 
         # add data to dictionary
-        data['coords']['time']['data'] = np.append(data['coords']['time']['data'], np.array(df_ecoa.time))
-        data['data_vars']['data_source']['data'] = np.append(data['data_vars']['data_source']['data'], np.repeat('ECOA-NCEI', len(df_ecoa.time)))
-        data['data_vars']['cruise']['data'] = np.append(data['data_vars']['cruise']['data'], np.array(df_ecoa.Cruise_ID))
-        data['data_vars']['obs_type']['data'] = np.append(data['data_vars']['obs_type']['data'], np.repeat('Niskin', len(df_ecoa.time)))
-        cruise_accession = accession_mapping[np.unique(df_ecoa.Cruise_ID)[0]]
-        data['data_vars']['accession']['data'] = np.append(data['data_vars']['accession']['data'], np.repeat(cruise_accession, len(df_ecoa.time)))
-        data['data_vars']['depth']['data'] = np.append(data['data_vars']['depth']['data'], np.array(df_ecoa.Depth))
-        data['data_vars']['lat']['data'] = np.append(data['data_vars']['lat']['data'], np.array(df_ecoa.Latitude))
-        data['data_vars']['lon']['data'] = np.append(data['data_vars']['lon']['data'], np.array(df_ecoa.Longitude))
-        data['data_vars']['salinity']['data'] = np.append(data['data_vars']['salinity']['data'], np.array(df_ecoa.CTDSAL_PSS78))
-        data['data_vars']['total_alkalinity']['data'] = np.append(data['data_vars']['total_alkalinity']['data'], np.array(df_ecoa['TA']))
+        data['coords']['time']['data'] = np.append(data['coords']['time']['data'], np.array(df.time))
+        data['data_vars']['data_source']['data'] = np.append(data['data_vars']['data_source']['data'], np.repeat('ECOA-NCEI', len(df.time)))
+        data['data_vars']['cruise']['data'] = np.append(data['data_vars']['cruise']['data'], np.array(df.Cruise_ID))
+        data['data_vars']['obs_type']['data'] = np.append(data['data_vars']['obs_type']['data'], np.repeat('Niskin', len(df.time)))
+        cruise_accession = accession_mapping[np.unique(df.Cruise_ID)[0]]
+        data['data_vars']['accession']['data'] = np.append(data['data_vars']['accession']['data'], np.repeat(cruise_accession, len(df.time)))
+        data['data_vars']['depth']['data'] = np.append(data['data_vars']['depth']['data'], np.array(df.Depth))
+        data['data_vars']['lat']['data'] = np.append(data['data_vars']['lat']['data'], np.array(df.Latitude))
+        data['data_vars']['lon']['data'] = np.append(data['data_vars']['lon']['data'], np.array(df.Longitude))
+        data['data_vars']['salinity']['data'] = np.append(data['data_vars']['salinity']['data'], np.array(df.CTDSAL_PSS78))
+        data['data_vars']['total_alkalinity']['data'] = np.append(data['data_vars']['total_alkalinity']['data'], np.array(df['TA']))
 
     # ECOA underway flow through data
     for ef in ecoa_files2:
-        df_ecoa = pd.read_csv(ef)
+        df = pd.read_csv(ef)
 
         # remove questionable (3) bad (4) and missing (9) TA
         try:
-            df_ecoa = df_ecoa[df_ecoa.TA_flag != 3]
-            df_ecoa = df_ecoa[df_ecoa.TA_flag != 4]
-            df_ecoa = df_ecoa[df_ecoa.TA_flag != -999]
-            df_ecoa = df_ecoa[df_ecoa.TA_flag != 9]
+            df = df[df.TA_flag != 3]
+            df = df[df.TA_flag != 4]
+            df = df[df.TA_flag != -999]
+            df = df[df.TA_flag != 9]
         except AttributeError:
             print('no TA flags')
 
         # remove missing salinity
-        df_ecoa = df_ecoa[df_ecoa.SSS != -999]
+        df = df[df.SSS != -999]
 
         # format date
         try:
-            df_ecoa['time'] = pd.to_datetime(df_ecoa[['Year', 'Month', 'Day']])
+            df['time'] = pd.to_datetime(df[['Year', 'Month', 'Day']])
         except KeyError:
-            df_ecoa['time'] = df_ecoa['Date_UTC'].map(lambda t: pd.to_datetime(str(t)))
+            df['time'] = df['Date_UTC'].map(lambda t: pd.to_datetime(str(t)))
 
         # make sure the data are within the defined extent
-        df_ecoa['in_region'] = ''
-        for i, row in df_ecoa.iterrows():
+        df['in_region'] = ''
+        for i, row in df.iterrows():
             if Polygon(list(zip(lon_bounds, lat_bounds))).contains(Point(row.Longitude, row.Latitude)):
-                df_ecoa.loc[i, 'in_region'] = 'yes'
+                df.loc[i, 'in_region'] = 'yes'
             else:
-                df_ecoa.loc[i, 'in_region'] = 'no'
+                df.loc[i, 'in_region'] = 'no'
 
         # drop data if it's not in the region specified
-        df_ecoa = df_ecoa[df_ecoa.in_region == 'yes']
+        df = df[df.in_region == 'yes']
 
         # add data to dictionary
-        data['coords']['time']['data'] = np.append(data['coords']['time']['data'], np.array(df_ecoa.time))
+        data['coords']['time']['data'] = np.append(data['coords']['time']['data'], np.array(df.time))
         data['data_vars']['data_source']['data'] = np.append(data['data_vars']['data_source']['data'],
-                                                             np.repeat('ECOA-NCEI', len(df_ecoa.time)))
+                                                             np.repeat('ECOA-NCEI', len(df.time)))
         data['data_vars']['cruise']['data'] = np.append(data['data_vars']['cruise']['data'],
-                                                        np.array(df_ecoa.CRUISE_ID))
+                                                        np.array(df.CRUISE_ID))
         data['data_vars']['obs_type']['data'] = np.append(data['data_vars']['obs_type']['data'],
-                                                          np.repeat('underway', len(df_ecoa.time)))
-        cruise_accession = accession_underway_mapping[np.unique(df_ecoa.CRUISE_ID)[0]]
+                                                          np.repeat('underway', len(df.time)))
+        cruise_accession = accession_underway_mapping[np.unique(df.CRUISE_ID)[0]]
         data['data_vars']['accession']['data'] = np.append(data['data_vars']['accession']['data'],
-                                                           np.repeat(cruise_accession, len(df_ecoa.time)))
-        data['data_vars']['depth']['data'] = np.append(data['data_vars']['depth']['data'], np.repeat(5, len(df_ecoa.time)))
-        data['data_vars']['lat']['data'] = np.append(data['data_vars']['lat']['data'], np.array(df_ecoa.Latitude))
-        data['data_vars']['lon']['data'] = np.append(data['data_vars']['lon']['data'], np.array(df_ecoa.Longitude))
+                                                           np.repeat(cruise_accession, len(df.time)))
+        data['data_vars']['depth']['data'] = np.append(data['data_vars']['depth']['data'], np.repeat(5, len(df.time)))
+        data['data_vars']['lat']['data'] = np.append(data['data_vars']['lat']['data'], np.array(df.Latitude))
+        data['data_vars']['lon']['data'] = np.append(data['data_vars']['lon']['data'], np.array(df.Longitude))
         data['data_vars']['salinity']['data'] = np.append(data['data_vars']['salinity']['data'],
-                                                          np.array(df_ecoa.SSS))
+                                                          np.array(df.SSS))
         data['data_vars']['total_alkalinity']['data'] = np.append(data['data_vars']['total_alkalinity']['data'],
-                                                                  np.array(df_ecoa.TA_umol_kg))
+                                                                  np.array(df.TA_umol_kg))
 
     # save as netcdf
     outds = xr.Dataset.from_dict(data)
