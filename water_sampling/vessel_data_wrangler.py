@@ -251,7 +251,7 @@ def main(lon_bounds, lat_bounds, codap_file, ecomon_files, ecomon_files2, ecoa_f
         # add data to dictionary
         if len(df) > 0:
             data['coords']['time']['data'] = np.append(data['coords']['time']['data'], np.array(df.time))
-            data['data_vars']['data_source']['data'] = np.append(data['data_vars']['data_source']['data'], np.repeat('ECOMON-NCEI', len(df.time)))
+            data['data_vars']['data_source']['data'] = np.append(data['data_vars']['data_source']['data'], np.repeat('NCEI-OCADS', len(df.time)))
             data['data_vars']['cruise']['data'] = np.append(data['data_vars']['cruise']['data'], np.array(df.Cruise_ID))
             data['data_vars']['obs_type']['data'] = np.append(data['data_vars']['obs_type']['data'], np.array(df.Observation_Type))
             cruise_accession = accession_mapping[np.unique(df.Cruise_ID)[0]]
@@ -295,7 +295,7 @@ def main(lon_bounds, lat_bounds, codap_file, ecomon_files, ecomon_files2, ecoa_f
         if len(df) > 0:
             data['coords']['time']['data'] = np.append(data['coords']['time']['data'], np.array(df.time))
             data['data_vars']['data_source']['data'] = np.append(data['data_vars']['data_source']['data'],
-                                                                 np.repeat('ECOMON-NCEI', len(df.time)))
+                                                                 np.repeat('NCEI-OCADS', len(df.time)))
             data['data_vars']['cruise']['data'] = np.append(data['data_vars']['cruise']['data'],
                                                             np.array(df.CRUISE_ID))
             data['data_vars']['obs_type']['data'] = np.append(data['data_vars']['obs_type']['data'],
@@ -349,7 +349,7 @@ def main(lon_bounds, lat_bounds, codap_file, ecomon_files, ecomon_files2, ecoa_f
 
         # add data to dictionary
         data['coords']['time']['data'] = np.append(data['coords']['time']['data'], np.array(df.time))
-        data['data_vars']['data_source']['data'] = np.append(data['data_vars']['data_source']['data'], np.repeat('ECOA-NCEI', len(df.time)))
+        data['data_vars']['data_source']['data'] = np.append(data['data_vars']['data_source']['data'], np.repeat('NCEI-OCADS', len(df.time)))
         data['data_vars']['cruise']['data'] = np.append(data['data_vars']['cruise']['data'], np.array(df.Cruise_ID))
         data['data_vars']['obs_type']['data'] = np.append(data['data_vars']['obs_type']['data'], np.repeat('Niskin', len(df.time)))
         cruise_accession = accession_mapping[np.unique(df.Cruise_ID)[0]]
@@ -396,7 +396,7 @@ def main(lon_bounds, lat_bounds, codap_file, ecomon_files, ecomon_files2, ecoa_f
         # add data to dictionary
         data['coords']['time']['data'] = np.append(data['coords']['time']['data'], np.array(df.time))
         data['data_vars']['data_source']['data'] = np.append(data['data_vars']['data_source']['data'],
-                                                             np.repeat('ECOA-NCEI', len(df.time)))
+                                                             np.repeat('NCEI-OCADS', len(df.time)))
         data['data_vars']['cruise']['data'] = np.append(data['data_vars']['cruise']['data'],
                                                         np.array(df.CRUISE_ID))
         data['data_vars']['obs_type']['data'] = np.append(data['data_vars']['obs_type']['data'],
@@ -417,6 +417,9 @@ def main(lon_bounds, lat_bounds, codap_file, ecomon_files, ecomon_files2, ecoa_f
 
     # add season
     outds['season'] = outds['time.season']
+
+    # add year
+    outds['year'] = outds['time.year']
 
     # add created time to global attrs
     datetime_format = '%Y-%m-%dT%H:%M:%SZ'
@@ -459,6 +462,14 @@ def main(lon_bounds, lat_bounds, codap_file, ecomon_files, ecomon_files2, ecoa_f
     df = outds.to_pandas()
     df.reset_index(inplace=True)
     df.to_csv(save_file, index=False)
+
+    # summarize the data sources
+    summary = df.groupby(['data_source', 'cruise', 'obs_type', 'accession', 'season', 'year']).size()
+    summary = summary.reset_index()
+    summary.rename({0: 'sample_count'})
+    summary.sort_values(['data_source', 'year'], inplace=True)
+    save_file = os.path.join(savedir, f'vessel_based_TA_salinity_NYB_source_summary_{savedate}.csv')
+    summary.to_csv(save_file, index=False)
 
 
 if __name__ == '__main__':
