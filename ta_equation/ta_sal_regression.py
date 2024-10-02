@@ -70,8 +70,8 @@ def main(deployment_season, deployment_region, sDir):
     plt.savefig(sname, dpi=200)
     plt.close()
 
-    values = {'m': m,
-              'b': b
+    values = {'m': np.round(m, 2),
+              'b': np.round(b, 2)
               }
 
     fname = f'{deployment_season}_ta_equation_{deployment_region}.txt'
