@@ -2,7 +2,7 @@
 
 """
 Author: Lori Garzio on 4/6/2021
-Last modified: 4/5/2022
+Last modified: 10/2/2024
 Modified from MATLAB code written by Liza Wright-Fairbanks.
 Calculate the linear relationship between Total Alkalinity and salinity from in-situ water sampling data taken during
 glider deployment and recovery (for nearshore samples = lower salinity region) and historical ECOA water sampling data
@@ -20,21 +20,24 @@ import matplotlib.pyplot as plt
 import functions.common as cf
 
 
-def main(deploy, deployment_season, deployment_region, sDir):
-    ecoa_data = '/Users/garzio/Documents/repo/lgarzio/phglider/water_sampling/ECOA.csv'
+def main(deployment_season, deployment_region, sDir):
+    vessel_data = f'/Users/garzio/Documents/repo/lgarzio/phglider/water_sampling/vessel_based_TA_salinity_{deployment_region}.csv'
     glider_ws_data = f'/Users/garzio/Documents/repo/lgarzio/phglider/water_sampling/ph_water_sampling_{deployment_region}.csv'
     
-    ecoa_df = pd.read_csv(ecoa_data)
+    vessel_df = pd.read_csv(vessel_data)
+    vessel_df = vessel_df[vessel_df.season == deployment_season]
+    vessel_sub = vessel_df[['salinity', 'total_alkalinity']]  # TA units = umol/kg
     glider_df = pd.read_csv(glider_ws_data)
     glider_df = glider_df[glider_df.season == deployment_season]
-    glider_sub = glider_df[['discrete_sal', 'discrete_ta']]  # TA units = umol/kg
-    df = ecoa_df.append(glider_sub)
+    glider_df.dropna(subset='depth', inplace=True)
+    glider_sub = glider_df[['salinity', 'total_alkalinity']]  # TA units = umol/kg
+    df = vessel_sub.append(glider_sub)
     df.dropna(inplace=True)
 
     # discrete_sal = np.append(np.array(ecoa_df.discrete_sal), np.array(glider_df.discrete_sal))
     # discrete_ta = np.append(np.array(ecoa_df.discrete_ta), np.array(glider_df.discrete_ta))  # units = umol/kg
 
-    r_sq, m, b, y_predict = cf.linear_regression(np.array(df.discrete_sal), np.array(df.discrete_ta))
+    r_sq, m, b, y_predict = cf.linear_regression(np.array(df.salinity), np.array(df.total_alkalinity))
     equation = 'y = {}x + {}'.format(np.round(m, 2), np.round(b, 2))
 
     source = np.unique(glider_df['source']).tolist()
@@ -47,15 +50,19 @@ def main(deploy, deployment_season, deployment_region, sDir):
 
     # plot
     fig, ax = plt.subplots()
-    ax.plot(ecoa_df.discrete_sal, ecoa_df.discrete_ta, 'r.', ms=5, label='ECOA')
-    ax.plot(glider_df.discrete_sal, glider_df.discrete_ta, 'b.', ms=5, label=glider_label)
-    ax.plot(df.discrete_sal, y_predict, 'k-', label=equation)
-    ax.text(np.nanmin(df.discrete_sal), np.nanmax(df.discrete_ta) * 0.97, 'R2: {}'.format(np.round(r_sq, 2)), fontsize=8)
+    vlab = f'Vessel (n={len(vessel_sub.salinity)})'
+    glab = f'{glider_label} (n={len(glider_sub.salinity)})'
+    ax.plot(vessel_sub.salinity, vessel_sub.total_alkalinity, 'r.', ms=5, label=vlab)
+    ax.plot(glider_sub.salinity, glider_sub.total_alkalinity, 'b.', ms=5, label=glab)
+    ax.plot(df.salinity, y_predict, 'k-', label=equation)
+    #ax.text(np.nanmin(df.salinity), np.nanmax(df.total_alkalinity) * 0.9, 'R2: {}'.format(np.round(r_sq, 2)), fontsize=8)
+    ax.set_ylim([1900, 2400])
+    ax.set_xlim([28, 37])
     ax.set_xlabel('Salinity')
     ax.set_ylabel('Total Alkalinity')
     plt.legend(fontsize=8)
-    plt.title(deploy)
-    sname = os.path.join(sDir, '{}_ta_sal_regression.png'.format(deploy))
+    plt.title(f'{deployment_season} (R2={np.round(r_sq, 2)})')
+    sname = os.path.join(sDir, f'{deployment_season}_ta_sal_regression_{deployment_region}.png')
     plt.savefig(sname, dpi=200)
     plt.close()
 
@@ -63,14 +70,13 @@ def main(deploy, deployment_season, deployment_region, sDir):
               'b': b
               }
 
-    fname = '{}_ta_equation.txt'.format(deploy)
+    fname = f'{deployment_season}_ta_equation_{deployment_region}.txt'
     with open(fname, 'w') as outfile:
         json.dump(values, outfile)
 
 
 if __name__ == '__main__':
-    deployment = 'ru30-20210503T1929'
-    season = 'spring'
-    region = 'mab'
-    save_dir = '/Users/garzio/Documents/rucool/Saba/gliderdata/2021/ru30-20210503T1929/delayed/'
-    main(deployment, season, region, save_dir)
+    season = 'SON'
+    region = 'NYB'
+    save_dir = '/Users/garzio/Documents/repo/lgarzio/phglider/water_sampling/regression_plots'
+    main(season, region, save_dir)
