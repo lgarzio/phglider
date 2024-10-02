@@ -63,7 +63,7 @@ def main(deployment_season, deployment_region, sDir):
     ax.set_ylim([1900, 2400])
     ax.set_xlim([28, 37])
     ax.set_xlabel('Salinity')
-    ax.set_ylabel('Total Alkalinity')
+    ax.set_ylabel('Total Alkalinity (umol/kg)')
     plt.legend(fontsize=8)
     plt.title(f'{deployment_season} (R2={np.round(r_sq, 2)})')
     sname = os.path.join(sDir, f'{deployment_season}_ta_sal_regression_{deployment_region}.png')
