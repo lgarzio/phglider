@@ -24,18 +24,20 @@ def main(deployment_season, deployment_region, sDir):
     vessel_data = f'/Users/garzio/Documents/repo/lgarzio/phglider/water_sampling/vessel_based_TA_salinity_{deployment_region}.csv'
     glider_ws_data = f'/Users/garzio/Documents/repo/lgarzio/phglider/water_sampling/ph_water_sampling_{deployment_region}.csv'
     
+    # grab vessel data for specified season
     vessel_df = pd.read_csv(vessel_data)
     vessel_df = vessel_df[vessel_df.season == deployment_season]
     vessel_sub = vessel_df[['salinity', 'total_alkalinity']]  # TA units = umol/kg
+
+    # grab water sampling done during glider ops for specified season
     glider_df = pd.read_csv(glider_ws_data)
     glider_df = glider_df[glider_df.season == deployment_season]
     glider_df.dropna(subset='depth', inplace=True)
     glider_sub = glider_df[['salinity', 'total_alkalinity']]  # TA units = umol/kg
+
+    # combine dataframes
     df = vessel_sub.append(glider_sub)
     df.dropna(inplace=True)
-
-    # discrete_sal = np.append(np.array(ecoa_df.discrete_sal), np.array(glider_df.discrete_sal))
-    # discrete_ta = np.append(np.array(ecoa_df.discrete_ta), np.array(glider_df.discrete_ta))  # units = umol/kg
 
     r_sq, m, b, y_predict = cf.linear_regression(np.array(df.salinity), np.array(df.total_alkalinity))
     equation = 'y = {}x + {}'.format(np.round(m, 2), np.round(b, 2))
